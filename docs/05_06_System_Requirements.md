@@ -32,11 +32,13 @@ This document outlines the strict engineering rules (Functional and Non-Function
 - **NFR 1.2:** The frontend SHALL sanitize all user inputs to prevent Cross-Site Scripting (XSS).
 - **NFR 1.3:** The system SHALL NEVER expose the entire transaction history to the LLM API. Only the relevant transactions retrieved via database querying or RAG SHALL be sent in the prompt context.
 - **NFR 1.4:** The system SHALL provide a "Delete Account" endpoint that hard-deletes the user's profile and cascades deletion to all their transactions and goals (GDPR/DPDP compliance).
+- **NFR 1.5:** The system SHALL implement a "Zero-Retention Policy" for raw uploads. Raw `.csv` files MUST be deleted immediately from server memory/disk upon successful parsing to minimize data exposure.
 
 ### NFR2: Performance & Scalability
 - **NFR 2.1:** The API SHALL return Dashboard data in under 2 seconds for accounts with up to 10,000 transactions.
 - **NFR 2.2:** Database queries involving transactions SHALL use indexing on `user_id` and `date` columns to ensure rapid retrieval.
 - **NFR 2.3:** The FastAPI backend SHALL remain completely stateless, allowing horizontal scaling via Docker containers. Session state and rate limiting SHALL be handled by Redis.
+- **NFR 2.4:** The system SHALL enforce strict Rate Limiting via Redis on the AI Chat endpoint (e.g., max 20 requests per user per hour) to prevent abuse and control OpenAI API costs.
 
 ### NFR3: Maintainability & Code Quality
 - **NFR 3.1:** The backend SHALL follow Clean Architecture principles (Separation of Routes, Controllers, Services, and Repositories).
