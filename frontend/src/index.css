@@ -1,5 +1,13 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+
+@theme {
+  --color-finpilot-dark: #0f172a;
+  --color-finpilot-card: #1e293b;
+  --color-finpilot-primary: #3b82f6;
+  --color-finpilot-primary-hover: #2563eb;
+  --color-finpilot-text: #f8fafc;
+  --color-finpilot-muted: #94a3b8;
+}
 
 @layer base {
   body {

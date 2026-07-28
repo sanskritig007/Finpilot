@@ -74,7 +74,7 @@ export const LoginView = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-finpilot-primary hover:bg-finpilot-primary_hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-finpilot-primary focus:ring-offset-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-finpilot-primary hover:bg-finpilot-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-finpilot-primary focus:ring-offset-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
