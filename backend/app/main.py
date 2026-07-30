@@ -10,8 +10,12 @@ app = FastAPI(
 
 # CORS configuration
 origins = [
-    "http://localhost:5173", # Vite default port
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
 ]
 
 app.add_middleware(
@@ -22,11 +26,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.v1 import auth
+from app.api.v1 import auth, transactions, dashboard
 
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "FinPilot AI API is running"}
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["transactions"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 

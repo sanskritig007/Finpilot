@@ -3,7 +3,8 @@ import { useAuth } from './AuthContext';
 import { Lock, Mail } from 'lucide-react';
 
 export const LoginView = () => {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,9 +15,13 @@ export const LoginView = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      if (isSignup) {
+        await signup(email, password);
+      } else {
+        await login(email, password);
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to login');
+      setError(err.response?.data?.detail || `Failed to ${isSignup ? 'sign up' : 'login'}. Make sure your backend server is running.`);
     } finally {
       setLoading(false);
     }
@@ -26,8 +31,12 @@ export const LoginView = () => {
     <div className="min-h-screen flex items-center justify-center bg-finpilot-dark px-4">
       <div className="max-w-md w-full bg-finpilot-card p-8 rounded-xl shadow-2xl border border-slate-700">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-          <p className="text-finpilot-muted">Sign in to your FinPilot account</p>
+          <h2 className="text-3xl font-bold text-white mb-2">
+            {isSignup ? 'Create Account' : 'Welcome Back'}
+          </h2>
+          <p className="text-finpilot-muted">
+            {isSignup ? 'Get started with your personal finance assistant' : 'Sign in to your FinPilot account'}
+          </p>
         </div>
         
         {error && (
@@ -76,9 +85,18 @@ export const LoginView = () => {
             disabled={loading}
             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-finpilot-primary hover:bg-finpilot-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-finpilot-primary focus:ring-offset-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => { setIsSignup(!isSignup); setError(''); }}
+            className="text-xs text-finpilot-primary hover:underline font-semibold"
+          >
+            {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
+        </div>
       </div>
     </div>
   );

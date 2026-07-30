@@ -10,3 +10,5 @@ class User(Base):
     auth_provider = Column(String(50), default="email")
     
     accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="user", cascade="all, delete-orphan")

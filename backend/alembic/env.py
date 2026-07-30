@@ -24,6 +24,8 @@ from app.models.base import Base
 # Make sure to import all models here so Alembic can see them
 from app.models.user import User
 from app.models.account import Account
+from app.models.transaction import Transaction
+from app.models.goal import Goal
 
 target_metadata = Base.metadata
 
