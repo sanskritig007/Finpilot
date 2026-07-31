@@ -46,6 +46,53 @@ export const ChatWidget = () => {
     }
   };
 
+  const formatMessage = (content) => {
+    return content.split('\n').map((line, lineIdx) => {
+      let temp = line.trim();
+      
+      // Check if bullet line
+      const isBullet = temp.startsWith('* ') || temp.startsWith('- ');
+      if (isBullet) {
+        temp = temp.substring(2);
+      }
+      
+      // Parse **bold** parts
+      const parts = [];
+      const boldRegex = /\*\*(.*?)\*\*/g;
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = boldRegex.exec(temp)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(temp.substring(lastIndex, match.index));
+        }
+        parts.push(<strong key={match.index} className="font-bold text-white">{match[1]}</strong>);
+        lastIndex = boldRegex.lastIndex;
+      }
+      
+      if (lastIndex < temp.length) {
+        parts.push(temp.substring(lastIndex));
+      }
+      
+      const contentEl = parts.length > 0 ? parts : temp;
+      
+      if (isBullet) {
+        return (
+          <div key={lineIdx} className="flex items-start gap-2 ml-2 my-1">
+            <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-finpilot-primary"></span>
+            <span className="text-slate-100">{contentEl}</span>
+          </div>
+        );
+      }
+      
+      return (
+        <p key={lineIdx} className="min-h-[1rem] my-0.5 text-slate-100">
+          {contentEl}
+        </p>
+      );
+    });
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       
@@ -94,7 +141,7 @@ export const ChatWidget = () => {
                       : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{msg.content}</p>
+                  <div className="space-y-1">{formatMessage(msg.content)}</div>
                 </div>
               </div>
             ))}
