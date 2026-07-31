@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 
 # Initialize FastAPI App
@@ -26,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.v1 import auth, transactions, dashboard
+from app.api.v1 import auth, transactions, dashboard, chat
 
 @app.get("/health")
 def health_check():
@@ -35,4 +37,5 @@ def health_check():
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["transactions"])
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 

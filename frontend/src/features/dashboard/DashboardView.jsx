@@ -3,6 +3,7 @@ import api from '../../core/api';
 import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
+import { ChatWidget } from '../chat/ChatWidget';
 import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut } from 'lucide-react';
 
 export const DashboardView = () => {
@@ -160,6 +161,9 @@ export const DashboardView = () => {
           onClose={() => setIsUploadOpen(false)}
           onUploadSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
+
+        {/* Floating AI Chat Assistant */}
+        <ChatWidget />
 
       </div>
     </div>
