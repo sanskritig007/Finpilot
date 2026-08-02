@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.50",
+    "ai": "^7.0.47",
     "axios": "^1.18.1",
     "lucide-react": "^1.27.0",
     "react": "^19.2.7",
@@ -24,6 +26,7 @@
     "oxlint": "^1.71.0",
     "postcss": "^8.5.23",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vite-plugin-node-polyfills": "^0.28.0"
   }
 }

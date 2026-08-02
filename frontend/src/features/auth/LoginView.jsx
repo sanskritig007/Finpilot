@@ -38,7 +38,7 @@ export const LoginView = () => {
             {isSignup ? 'Get started with your personal finance assistant' : 'Sign in to your FinPilot account'}
           </p>
         </div>
-        
+
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded mb-6 text-sm">
             {error}

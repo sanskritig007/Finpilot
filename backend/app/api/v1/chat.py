@@ -1,10 +1,11 @@
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional, Dict, Any
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -14,15 +15,13 @@ router = APIRouter()
 
 class ChatMessage(BaseModel):
     role: str  # 'user', 'assistant'
-    content: str
+    content: Optional[str] = None
+    parts: Optional[List[Dict[str, Any]]] = None
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
 
-class ChatResponse(BaseModel):
-    response: str
-
-@router.post("/", response_model=ChatResponse)
+@router.post("/")
 def chat_with_assistant(
     payload: ChatRequest,
     current_user: User = Depends(get_current_user),
@@ -36,19 +35,42 @@ def chat_with_assistant(
             detail="You've reached your hourly chat limit (20 messages/hour). Please try again later."
         )
         
+    # Convert Pydantic schemas to standard dictionaries
+    messages_list = []
+    for msg in payload.messages:
+        content = msg.content
+        if not content and msg.parts:
+            content = "".join([part.get("text", "") for part in msg.parts if part.get("type") == "text"])
+        messages_list.append({"role": msg.role, "content": content or ""})
+    
+    # Use working non-stream run_chat_completion to execute tools safely
     try:
-        # Convert Pydantic schemas to standard dictionaries for OpenAI service
-        messages_list = [{"role": msg.role, "content": msg.content} for msg in payload.messages]
-        
         ai_response = ai_service.run_chat_completion(
             db=db,
             user_id=current_user.id,
             messages=messages_list
         )
-        
-        return {"response": ai_response}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"AI Chat Service Error: {str(e)}"
+            detail=str(e)
         )
+        
+    def event_generator():
+        try:
+            import time
+            chunk_size = 6  # Yield 6 characters at a time
+            for i in range(0, len(ai_response), chunk_size):
+                chunk = ai_response[i:i+chunk_size]
+                yield chunk
+                time.sleep(0.015)  # 15ms delay for smooth typing animation
+        except Exception as e:
+            yield f"\nError: {str(e)}"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/plain",
+        headers={"x-vercel-ai-data-stream": "v1"}
+    )
+
+

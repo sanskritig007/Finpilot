@@ -1,52 +1,71 @@
 import React, { useState, useRef, useEffect } from 'react';
-import api from '../../core/api';
+import { useChat } from '@ai-sdk/react';
+import { TextStreamChatTransport } from 'ai';
 import { MessageSquare, X, Send, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
   const messagesEndRef = useRef(null);
+
+  const [input, setInput] = useState('');
+
+  const {
+    messages,
+    sendMessage,
+    status,
+    error
+  } = useChat({
+    transport: new TextStreamChatTransport({
+      api: 'http://localhost:8000/api/v1/chat/',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('finpilot_token')}`
+      }
+    }),
+    messages: [
+      {
+        id: 'initial',
+        role: 'assistant',
+        content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+      }
+    ],
+    onError: (err) => {
+      console.error("Chat error callback triggered:", err);
+    }
+  });
+
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (input.trim() && status === 'ready') {
+      sendMessage({ text: input });
+      setInput('');
+    }
+  };
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, loading]);
+  }, [messages, isLoading]);
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-
-    const userMessage = { role: 'user', content: input.trim() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-    setError('');
-
-    try {
-      // Send message history including the new user message
-      const response = await api.post('/chat', {
-        messages: [...messages.map(m => ({ role: m.role, content: m.content })), userMessage]
-      });
-      
-      setMessages(prev => [...prev, { role: 'assistant', content: response.data.response }]);
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to send message. Make sure your server is online.');
-    } finally {
-      setLoading(false);
+  const getMessageText = (msg) => {
+    if (msg.content) return msg.content;
+    if (Array.isArray(msg.parts)) {
+      return msg.parts
+        .filter(part => part.type === 'text')
+        .map(part => part.text)
+        .join('');
     }
+    return '';
   };
 
   const formatMessage = (content) => {
+    if (!content) return [];
     return content.split('\n').map((line, lineIdx) => {
       let temp = line.trim();
       
@@ -141,12 +160,12 @@ export const ChatWidget = () => {
                       : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60'
                   }`}
                 >
-                  <div className="space-y-1">{formatMessage(msg.content)}</div>
+                  <div className="space-y-1">{formatMessage(getMessageText(msg))}</div>
                 </div>
               </div>
             ))}
             
-            {loading && (
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex justify-start">
                 <div className="bg-slate-800 border border-slate-700/60 rounded-2xl rounded-bl-none px-4 py-3 flex gap-1 items-center">
                   <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
@@ -159,7 +178,7 @@ export const ChatWidget = () => {
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg flex items-start gap-2.5 text-xs">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
+                <span>{error.message || 'Failed to send message. Make sure your server is online.'}</span>
               </div>
             )}
             
@@ -167,18 +186,18 @@ export const ChatWidget = () => {
           </div>
 
           {/* Input Form */}
-          <form onSubmit={handleSend} className="p-3 bg-slate-900/60 border-t border-slate-800 flex gap-2">
+          <form onSubmit={handleSubmit} className="p-3 bg-slate-900/60 border-t border-slate-800 flex gap-2">
             <input
               type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={input || ''}
+              onChange={handleInputChange}
               placeholder="Ask FinPilot..."
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 bg-slate-850 border border-slate-750 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={loading || !input.trim()}
+              disabled={isLoading || !input || !input.trim()}
               className="bg-finpilot-primary hover:bg-finpilot-primary-hover disabled:opacity-50 text-white p-2 rounded-xl transition-all flex items-center justify-center shrink-0"
             >
               <Send className="h-4 w-4" />
