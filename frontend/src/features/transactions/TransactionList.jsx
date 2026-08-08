@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../core/api';
-import { Calendar, Tag, Info, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORIES = [
   'Uncategorized',
@@ -22,11 +22,7 @@ export const TransactionList = ({ refreshTrigger }) => {
   const [loading, setLoading] = useState(false);
   const [filterCategory, setFilterCategory] = useState('');
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [page, filterCategory, refreshTrigger]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const categoryParam = filterCategory ? `&category=${encodeURIComponent(filterCategory)}` : '';
@@ -38,7 +34,11 @@ export const TransactionList = ({ refreshTrigger }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filterCategory]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions, refreshTrigger]);
 
   const handleCategoryChange = async (id, newCategory) => {
     try {

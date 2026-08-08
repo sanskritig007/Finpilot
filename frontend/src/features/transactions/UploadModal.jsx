@@ -35,6 +35,11 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
       });
       setResult(response.data);
       if (onUploadSuccess) onUploadSuccess();
+      
+      // Auto-close modal after 1.5 seconds so they see the success results
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload statement.');
     } finally {
@@ -42,11 +47,18 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
     }
   };
 
+  const handleClose = () => {
+    onClose();
+    setFile(null);
+    setResult(null);
+    setError('');
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
       <div className="bg-finpilot-card w-full max-w-md p-6 rounded-xl border border-slate-700 shadow-2xl relative">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-finpilot-muted hover:text-white transition-colors"
         >
           <X className="h-5 w-5" />
@@ -94,7 +106,7 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
           <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 border border-slate-700 text-finpilot-muted rounded-lg hover:text-white transition-colors"
             >
               Cancel
