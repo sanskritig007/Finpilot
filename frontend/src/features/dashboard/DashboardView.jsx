@@ -5,6 +5,7 @@ import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
 import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut } from 'lucide-react';
+import { GoalsList } from '../goals/GoalsList';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -152,8 +153,18 @@ export const DashboardView = () => {
 
         </div>
 
-        {/* Main Workspace Layout (Transaction Table) */}
-        <TransactionList refreshTrigger={refreshTrigger} />
+        {/* Main Workspace Layout (Transactions & Goals Grid) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <TransactionList refreshTrigger={refreshTrigger} />
+          </div>
+          <div className="lg:col-span-1">
+            <GoalsList 
+              refreshTrigger={refreshTrigger} 
+              onUpdate={() => setRefreshTrigger(prev => prev + 1)} 
+            />
+          </div>
+        </div>
 
         {/* Upload Statement Modal */}
         <UploadModal
