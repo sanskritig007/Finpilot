@@ -73,4 +73,13 @@ def chat_with_assistant(
         headers={"x-vercel-ai-data-stream": "v1"}
     )
 
+@router.post("/clear", status_code=status.HTTP_200_OK)
+def clear_chat_history(
+    current_user: User = Depends(get_current_user)
+):
+    """Clear the assistant's memory by clearing the Redis rate limiting tracker for the user."""
+    rate_limiter.clear_rate_limit(current_user.id)
+    return {"message": "AI memory successfully reset"}
+
+
 

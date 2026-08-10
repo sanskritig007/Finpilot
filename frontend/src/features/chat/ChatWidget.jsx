@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { TextStreamChatTransport } from 'ai';
-import { MessageSquare, X, Send, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { MessageSquare, X, Send, AlertTriangle, ShieldCheck, Settings, Trash2, RefreshCw } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
+import api from '../../core/api';
 
-export const ChatWidget = () => {
+export const ChatWidget = ({ resetTrigger }) => {
   const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { logout } = useAuth();
 
   const [input, setInput] = useState('');
 
@@ -13,7 +19,8 @@ export const ChatWidget = () => {
     messages,
     sendMessage,
     status,
-    error
+    error,
+    setMessages
   } = useChat({
     transport: new TextStreamChatTransport({
       api: 'http://localhost:8000/api/v1/chat/',
@@ -47,11 +54,59 @@ export const ChatWidget = () => {
     }
   };
 
+  const handleClearMemory = async () => {
+    if (!window.confirm("Are you sure you want to clear AI memory? This will reset your message history and prompt limits.")) return;
+    setIsClearing(true);
+    try {
+      await api.post('/chat/clear');
+      setMessages([
+        {
+          id: 'initial',
+          role: 'assistant',
+          content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+        }
+      ]);
+      setShowSettings(false);
+    } catch (err) {
+      console.error("Failed to clear AI memory:", err);
+      alert("Failed to clear AI memory. Please try again.");
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("WARNING: Are you sure you want to permanently delete your account? This will wipe all your profile, transactions, goals, and history. This action is irreversible!")) return;
+    setIsDeleting(true);
+    try {
+      await api.delete('/auth/delete-account');
+      alert("Your account has been permanently deleted.");
+      logout();
+    } catch (err) {
+      console.error("Failed to delete account:", err);
+      alert("Failed to delete account. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      setMessages([
+        {
+          id: 'initial',
+          role: 'assistant',
+          content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+        }
+      ]);
+    }
+  }, [resetTrigger]);
 
   const getMessageText = (msg) => {
     if (msg.content) return msg.content;
@@ -138,77 +193,146 @@ export const ChatWidget = () => {
                 <span className="text-[10px] text-finpilot-muted mt-0.5 block">AI Companion</span>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-finpilot-muted hover:text-white transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/20">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`transition-colors ${showSettings ? 'text-white' : 'text-finpilot-muted hover:text-white'}`}
+                title="AI & Account Settings"
               >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-finpilot-primary text-white rounded-br-none'
-                      : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60'
-                  }`}
+                <Settings className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setShowSettings(false);
+                }}
+                className="text-finpilot-muted hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {showSettings ? (
+            /* Settings View */
+            <div className="flex-1 bg-slate-900 p-6 flex flex-col justify-between overflow-y-auto">
+              <div className="space-y-6">
+                <div>
+                  <h5 className="text-sm font-bold text-white mb-1">AI Assistant Settings</h5>
+                  <p className="text-xs text-finpilot-muted">Manage your AI context and account preferences.</p>
+                </div>
+                
+                {/* Actions */}
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                  
+                  {/* Clear AI Memory */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleClearMemory}
+                      disabled={isClearing}
+                      className="w-full bg-slate-850 hover:bg-slate-800 text-white font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-750 transition-all disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isClearing ? 'animate-spin' : ''}`} />
+                      <span>{isClearing ? 'Clearing Memory...' : 'Reset AI Memory'}</span>
+                    </button>
+                    <p className="text-[10px] text-finpilot-muted leading-relaxed">
+                      Deletes current conversational context and resets your hourly prompt limits to start a fresh chat.
+                    </p>
+                  </div>
+
+                  {/* Permanent Account Deletion */}
+                  <div className="space-y-2 pt-4 border-t border-slate-800">
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                      className="w-full bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 hover:text-red-300 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>{isDeleting ? 'Deleting Account...' : 'Delete Account Permanently'}</span>
+                    </button>
+                    <p className="text-[10px] text-red-500/80 leading-relaxed font-medium">
+                      Warning: This will permanently wipe your profile, linked bank details, goals, and transaction history. This action is irreversible.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Back Button */}
+              <button
+                onClick={() => setShowSettings(false)}
+                className="w-full bg-finpilot-primary hover:bg-finpilot-primary-hover text-white text-xs font-semibold py-2.5 rounded-xl transition-all mt-4"
+              >
+                Back to Chat
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/20">
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-finpilot-primary text-white rounded-br-none'
+                          : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60'
+                      }`}
+                    >
+                      <div className="space-y-1">{formatMessage(getMessageText(msg))}</div>
+                    </div>
+                  </div>
+                ))}
+                
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800 border border-slate-700/60 rounded-2xl rounded-bl-none px-4 py-3 flex gap-1 items-center">
+                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg flex items-start gap-2.5 text-xs">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{error.message || 'Failed to send message. Make sure your server is online.'}</span>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Form */}
+              <form onSubmit={handleSubmit} className="p-3 bg-slate-900/60 border-t border-slate-800 flex gap-2">
+                <input
+                  type="text"
+                  value={input || ''}
+                  onChange={handleInputChange}
+                  placeholder="Ask FinPilot..."
+                  disabled={isLoading}
+                  className="flex-1 bg-slate-850 border border-slate-750 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !input || !input.trim()}
+                  className="bg-finpilot-primary hover:bg-finpilot-primary-hover disabled:opacity-50 text-white p-2 rounded-xl transition-all flex items-center justify-center shrink-0"
                 >
-                  <div className="space-y-1">{formatMessage(getMessageText(msg))}</div>
-                </div>
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+              
+              {/* Rate Limit Notice */}
+              <div className="bg-slate-950 p-2 border-t border-slate-800 text-[10px] text-finpilot-muted flex items-center justify-center gap-1.5 font-medium">
+                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                <span>Rate limit: 20 prompts / hour</span>
               </div>
-            ))}
-            
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (
-              <div className="flex justify-start">
-                <div className="bg-slate-800 border border-slate-700/60 rounded-2xl rounded-bl-none px-4 py-3 flex gap-1 items-center">
-                  <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg flex items-start gap-2.5 text-xs">
-                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{error.message || 'Failed to send message. Make sure your server is online.'}</span>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Form */}
-          <form onSubmit={handleSubmit} className="p-3 bg-slate-900/60 border-t border-slate-800 flex gap-2">
-            <input
-              type="text"
-              value={input || ''}
-              onChange={handleInputChange}
-              placeholder="Ask FinPilot..."
-              disabled={isLoading}
-              className="flex-1 bg-slate-850 border border-slate-750 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input || !input.trim()}
-              className="bg-finpilot-primary hover:bg-finpilot-primary-hover disabled:opacity-50 text-white p-2 rounded-xl transition-all flex items-center justify-center shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-          
-          {/* Rate Limit Notice */}
-          <div className="bg-slate-950 p-2 border-t border-slate-800 text-[10px] text-finpilot-muted flex items-center justify-center gap-1.5 font-medium">
-            <ShieldCheck className="h-3 w-3 text-emerald-500" />
-            <span>Rate limit: 20 prompts / hour</span>
-          </div>
+            </>
+          )}
 
         </div>
       )}

@@ -4,8 +4,9 @@ import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut } from 'lucide-react';
+import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
+import { SettingsModal } from './SettingsModal';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -16,6 +17,8 @@ export const DashboardView = () => {
     safe_to_spend: 0,
   });
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [chatResetTrigger, setChatResetTrigger] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [openingBalance, setOpeningBalance] = useState('');
   const [showBalanceForm, setShowBalanceForm] = useState(false);
@@ -65,6 +68,13 @@ export const DashboardView = () => {
             >
               <Plus className="h-4 w-4" />
               <span>Upload CSV</span>
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="bg-slate-800 hover:bg-slate-700 text-finpilot-muted hover:text-white p-2.5 rounded-lg transition-colors"
+              title="Settings"
+            >
+              <Settings className="h-5 w-5" />
             </button>
             <button
               onClick={logout}
@@ -173,8 +183,15 @@ export const DashboardView = () => {
           onUploadSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
 
+        {/* Settings Modal */}
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          onResetChat={() => setChatResetTrigger(prev => prev + 1)}
+        />
+
         {/* Floating AI Chat Assistant */}
-        <ChatWidget />
+        <ChatWidget resetTrigger={chatResetTrigger} />
 
       </div>
     </div>

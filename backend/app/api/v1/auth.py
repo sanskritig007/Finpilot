@@ -9,6 +9,8 @@ from app.schemas.user_schema import UserCreate, UserResponse
 from app.schemas.auth_schema import Token
 from app.services import auth_service
 from app.core.security import create_access_token
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -35,3 +37,13 @@ def logout(token: str):
     # and add it to the denylist.
     auth_service.add_token_to_denylist(token)
     return {"message": "Successfully logged out"}
+
+@router.delete("/delete-account", status_code=status.HTTP_200_OK)
+def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Permanently delete user profile and cascade delete all transactions and goals."""
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account permanently deleted"}

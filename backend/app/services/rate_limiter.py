@@ -31,3 +31,11 @@ def is_rate_limited(user_id: str) -> bool:
         # In case Redis goes down, we fallback to ALLOWING requests so the user experience doesn't break.
         print(f"Rate Limiter Redis Error: {e}")
         return False
+
+def clear_rate_limit(user_id: str) -> None:
+    """Clear Redis rate limiting records for a specific user."""
+    key = f"ratelimit:{user_id}"
+    try:
+        redis_client.delete(key)
+    except Exception as e:
+        print(f"Error clearing rate limit key in Redis: {e}")
