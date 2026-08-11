@@ -6,8 +6,8 @@ from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.transaction import Transaction
-from app.schemas.transaction_schema import TransactionResponse, TransactionUpdate, PaginatedTransactions
-from app.services import csv_parser
+from app.schemas.transaction_schema import TransactionResponse, TransactionUpdate, PaginatedTransactions, TransactionCreate
+from app.services import csv_parser, transaction_service
 
 router = APIRouter()
 
@@ -41,6 +41,21 @@ async def upload_csv(
         "total_imported": imported,
         "duplicates_skipped": skipped
     }
+
+@router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+def create_transaction(
+    payload: TransactionCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Manually log a single transaction (income or expense)."""
+    try:
+        return transaction_service.create_manual_transaction(db, current_user.id, payload)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 @router.get("/", response_model=PaginatedTransactions)
 def get_transactions(

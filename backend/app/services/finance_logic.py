@@ -22,12 +22,34 @@ def get_total_balance(db: Session, user_id: str) -> Decimal:
         
     return account_sum + income_sum - expense_sum
 
+from datetime import date
+
 def get_locked_goals_amount(db: Session, user_id: str) -> Decimal:
-    """Calculate the sum of target amounts for all active savings goals."""
-    active_goals_sum = db.query(func.sum(Goal.target_amount))\
-        .filter(Goal.user_id == user_id)\
-        .filter(Goal.status == 'active').scalar() or Decimal('0.00')
-    return active_goals_sum
+    """Calculate the sum of recommended per-month savings for all active savings goals."""
+    active_goals = db.query(Goal).filter(
+        Goal.user_id == user_id,
+        Goal.status == 'active'
+    ).all()
+    
+    total_monthly_locked = Decimal('0.00')
+    today = date.today()
+    
+    for goal in active_goals:
+        remaining = goal.target_amount - goal.current_amount
+        if remaining <= 0:
+            continue
+            
+        if goal.target_date:
+            months = (goal.target_date.year - today.year) * 12 + (goal.target_date.month - today.month)
+            if months <= 0:
+                months = 1
+        else:
+            months = 1
+            
+        monthly_share = remaining / Decimal(str(months))
+        total_monthly_locked += monthly_share
+        
+    return total_monthly_locked
 
 def get_upcoming_fixed_expenses(db: Session, user_id: str) -> Decimal:
     """Calculate upcoming fixed expenses. (Stubbed to 0.00 for Sprint 2)."""

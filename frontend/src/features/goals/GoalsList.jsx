@@ -71,6 +71,24 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
+  const getMonthlyRecommendation = (targetAmount, currentAmount, targetDate) => {
+    if (!targetDate) return null;
+    const today = new Date();
+    const target = new Date(targetDate);
+    
+    // Calculate difference in months
+    let months = (target.getFullYear() - today.getFullYear()) * 12 + (target.getMonth() - today.getMonth());
+    
+    if (months <= 0) {
+      months = 1;
+    }
+    
+    const remaining = parseFloat(targetAmount) - parseFloat(currentAmount);
+    if (remaining <= 0) return 0;
+    
+    return Math.round(remaining / months);
+  };
+
   return (
     <div className="bg-slate-900/50 backdrop-blur-md border border-slate-700/80 rounded-xl p-6 shadow-xl space-y-6">
       
@@ -123,10 +141,17 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
                       )}
                     </h4>
                     {goal.target_date && (
-                      <p className="text-[10px] text-finpilot-muted flex items-center gap-1 mt-0.5">
-                        <Calendar className="h-3 w-3" />
-                        <span>Target: {formatDate(goal.target_date)}</span>
-                      </p>
+                      <>
+                        <p className="text-[10px] text-finpilot-muted flex items-center gap-1 mt-0.5">
+                          <Calendar className="h-3 w-3" />
+                          <span>Target: {formatDate(goal.target_date)}</span>
+                        </p>
+                        {!isCompleted && (
+                          <p className="text-[10px] text-finpilot-primary/90 font-semibold mt-1">
+                            💡 Save ₹{getMonthlyRecommendation(goal.target_amount, goal.current_amount, goal.target_date).toLocaleString('en-IN')}/mo
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                   

@@ -7,6 +7,7 @@ import { ChatWidget } from '../chat/ChatWidget';
 import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
 import { SettingsModal } from './SettingsModal';
+import { AddTransactionModal } from '../transactions/AddTransactionModal';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -18,6 +19,7 @@ export const DashboardView = () => {
   });
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [chatResetTrigger, setChatResetTrigger] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [openingBalance, setOpeningBalance] = useState('');
@@ -62,6 +64,13 @@ export const DashboardView = () => {
           </div>
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsAddTransactionOpen(true)}
+              className="bg-slate-800 hover:bg-slate-750 hover:text-white border border-slate-700 text-slate-200 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-md transition-all flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Transaction</span>
+            </button>
             <button
               onClick={() => setIsUploadOpen(true)}
               className="bg-finpilot-primary hover:bg-finpilot-primary-hover text-white font-semibold text-sm px-5 py-2.5 rounded-lg shadow-lg hover:shadow-blue-500/20 transition-all flex items-center gap-2"
@@ -158,7 +167,7 @@ export const DashboardView = () => {
             <h2 className="text-3xl font-black text-white">
               ₹{parseFloat(summary.active_goals_locked).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h2>
-            <p className="text-xs text-finpilot-muted mt-2">Savings goals target currently reserved</p>
+            <p className="text-xs text-finpilot-muted mt-2">Monthly savings target required for active goals</p>
           </div>
 
         </div>
@@ -188,6 +197,13 @@ export const DashboardView = () => {
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
           onResetChat={() => setChatResetTrigger(prev => prev + 1)}
+        />
+
+        {/* Add Manual Transaction Modal */}
+        <AddTransactionModal
+          isOpen={isAddTransactionOpen}
+          onClose={() => setIsAddTransactionOpen(false)}
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
 
         {/* Floating AI Chat Assistant */}
