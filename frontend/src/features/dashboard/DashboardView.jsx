@@ -121,7 +121,7 @@ export const DashboardView = () => {
                 <button
                   onClick={() => setShowBalanceForm(!showBalanceForm)}
                   className="p-1 text-finpilot-muted hover:text-white transition-colors"
-                  title="Update Starting Balance"
+                  title="Update Current Balance"
                 >
                   <Edit3 className="h-4 w-4" />
                 </button>
@@ -135,7 +135,7 @@ export const DashboardView = () => {
               <form onSubmit={handleUpdateBalance} className="flex gap-2 relative z-10">
                 <input
                   type="number"
-                  placeholder="Starting balance..."
+                  placeholder="Current balance..."
                   value={openingBalance}
                   onChange={(e) => setOpeningBalance(e.target.value)}
                   className="bg-slate-800 border border-slate-750 text-white text-sm rounded px-3 py-1 w-full focus:outline-none focus:ring-1 focus:ring-finpilot-primary"

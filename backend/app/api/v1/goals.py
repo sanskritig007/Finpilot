@@ -7,6 +7,9 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.goal import Goal
 from app.schemas.goal_schema import GoalCreate, GoalUpdate, GoalResponse
+from datetime import date
+from app.models.transaction import Transaction
+from app.services.csv_parser import generate_transaction_hash
 
 router = APIRouter()
 
@@ -53,6 +56,11 @@ def update_goal(
             detail="Goal not found"
         )
 
+    # Calculate difference in current amount (funds added or withdrawn)
+    added_amount = None
+    if goal_in.current_amount is not None:
+        added_amount = goal_in.current_amount - goal.current_amount
+
     # Update only fields provided
     update_data = goal_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -60,6 +68,37 @@ def update_goal(
         
     db.commit()
     db.refresh(goal)
+
+    # Log an automatic double-entry transaction to sync the total balance
+    if added_amount is not None and added_amount != 0:
+        tx_type = "expense" if added_amount > 0 else "income"
+        tx_desc = f"Saved to {goal.name}" if added_amount > 0 else f"Withdrew from {goal.name}"
+        tx_amount = abs(added_amount)
+        
+        # Unique suffix to prevent double-entry hash collisions on same-day manual logs
+        import time
+        unique_suffix = f" (vault:{int(time.time())})"
+        
+        tx_hash = generate_transaction_hash(
+            user_id=str(current_user.id),
+            date=date.today().strftime("%Y-%m-%d"),
+            amount=str(tx_amount),
+            description=tx_desc + unique_suffix,
+            t_type=tx_type
+        )
+        
+        db_tx = Transaction(
+            user_id=current_user.id,
+            date=date.today(),
+            amount=tx_amount,
+            type=tx_type,
+            category="Investment",
+            description=tx_desc,
+            transaction_hash=tx_hash
+        )
+        db.add(db_tx)
+        db.commit()
+
     return goal
 
 @router.delete("/{goal_id}", status_code=status.HTTP_200_OK)
@@ -75,6 +114,33 @@ def delete_goal(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Goal not found"
         )
+    # Refund saved amount back to Total Balance on deletion
+    if goal.current_amount > 0:
+        tx_desc = f"Refund from deleted goal: {goal.name}"
+        tx_amount = goal.current_amount
+        
+        import time
+        unique_suffix = f" (refund:{int(time.time())})"
+        
+        tx_hash = generate_transaction_hash(
+            user_id=str(current_user.id),
+            date=date.today().strftime("%Y-%m-%d"),
+            amount=str(tx_amount),
+            description=tx_desc + unique_suffix,
+            t_type="income"
+        )
+        
+        db_tx = Transaction(
+            user_id=current_user.id,
+            date=date.today(),
+            amount=tx_amount,
+            type="income",
+            category="Investment",
+            description=tx_desc,
+            transaction_hash=tx_hash
+        )
+        db.add(db_tx)
+
     db.delete(goal)
     db.commit()
     return {"message": "Goal deleted successfully"}
