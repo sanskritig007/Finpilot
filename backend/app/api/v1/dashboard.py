@@ -57,7 +57,7 @@ def set_opening_balance(
         
     # Calculate opening balance such that:
     # opening_balance + income_sum - expense_sum = payload.amount
-    adjusted_opening_balance = Decimal(str(payload.amount)) - income_sum + expense_sum
+    adjusted_opening_balance = PydanticDecimal(str(payload.amount)) - income_sum + expense_sum
 
     account = db.query(Account).filter(Account.user_id == current_user.id).first()
     if account:
