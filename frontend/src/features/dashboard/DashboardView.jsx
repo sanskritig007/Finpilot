@@ -4,7 +4,7 @@ import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings } from 'lucide-react';
+import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
 import { SettingsModal } from './SettingsModal';
 import { AddTransactionModal } from '../transactions/AddTransactionModal';
@@ -95,23 +95,78 @@ export const DashboardView = () => {
           </div>
         </div>
 
-        {/* Metrics Section (Premium Cards) */}
+        {/* Budget Warning Banners */}
+        {(() => {
+          const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
+          const totalBalanceVal = parseFloat(summary.total_balance) || 0;
+          const isExceeded = safeToSpendVal <= 0;
+          const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
+          
+          if (isExceeded) {
+            return (
+              <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center gap-3 text-red-400 text-sm font-semibold animate-pulse">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <span>Alert: You have exceeded your Safe to Spend budget! Consider postponing non-essential shopping or adjusting your savings goals.</span>
+              </div>
+            );
+          }
+          if (isWarning) {
+            return (
+              <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex items-center gap-3 text-amber-400 text-sm font-medium">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <span>Warning: Your Safe to Spend balance is running low (less than 15% of your total balance). Watch your spending!</span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Card 1: Safe To Spend */}
-          <div className="bg-gradient-to-br from-blue-900/60 to-slate-900/90 border border-blue-500/30 p-6 rounded-xl shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
-            <div className="flex items-center justify-between mb-4 relative z-10">
-              <span className="text-finpilot-muted font-bold text-xs uppercase tracking-wider">Safe To Spend</span>
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                <ShieldCheck className="h-5 w-5" />
+          {(() => {
+            const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
+            const totalBalanceVal = parseFloat(summary.total_balance) || 0;
+            const isExceeded = safeToSpendVal <= 0;
+            const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
+            
+            let cardBg = "bg-gradient-to-br from-blue-900/60 to-slate-900/90 border border-blue-500/30";
+            let glowBg = "bg-blue-500/10 group-hover:bg-blue-500/20";
+            let iconWrapper = "bg-blue-500/10 text-blue-400";
+            let descText = "Available balance safe for daily expenses";
+            let descColor = "text-finpilot-muted";
+            
+            if (isExceeded) {
+              cardBg = "bg-gradient-to-br from-red-950/40 to-slate-900/90 border border-red-500/40";
+              glowBg = "bg-red-500/10 group-hover:bg-red-500/20";
+              iconWrapper = "bg-red-500/15 text-red-400";
+              descText = "🚨 Alert: Safe to Spend budget exceeded!";
+              descColor = "text-red-400/90 font-medium";
+            } else if (isWarning) {
+              cardBg = "bg-gradient-to-br from-amber-950/40 to-slate-900/90 border border-amber-500/40";
+              glowBg = "bg-amber-500/10 group-hover:bg-amber-500/20";
+              iconWrapper = "bg-amber-500/15 text-amber-400";
+              descText = "⚠️ Warning: Budget is running low (under 15%)";
+              descColor = "text-amber-400/90 font-medium";
+            }
+            
+            return (
+              <div className={`${cardBg} p-6 rounded-xl shadow-2xl relative overflow-hidden group`}>
+                <div className={`absolute top-0 right-0 w-32 h-32 ${glowBg} rounded-full blur-3xl transition-all`}></div>
+                <div className="flex items-center justify-between mb-4 relative z-10">
+                  <span className="text-finpilot-muted font-bold text-xs uppercase tracking-wider">Safe To Spend</span>
+                  <div className={`p-2 rounded-lg ${iconWrapper}`}>
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-black text-white relative z-10">
+                  ₹{parseFloat(summary.safe_to_spend).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </h2>
+                <p className={`text-xs ${descColor} mt-2 relative z-10`}>{descText}</p>
               </div>
-            </div>
-            <h2 className="text-3xl font-black text-white relative z-10">
-              ₹{parseFloat(summary.safe_to_spend).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </h2>
-            <p className="text-xs text-finpilot-muted mt-2 relative z-10">Available balance safe for daily expenses</p>
-          </div>
+            );
+          })()}
 
           {/* Card 2: Total Balance */}
           <div className="bg-slate-900/50 backdrop-blur-md border border-slate-700/80 p-6 rounded-xl shadow-xl relative overflow-hidden">
