@@ -105,9 +105,20 @@ Finpilot/
 
 ---
 
+## Running Tests
+
+To run the backend unit tests for manual transaction flows and logic validations:
+```bash
+cd backend
+PYTHONPATH=. venv/bin/python -m unittest tests/test_manual_transactions.py
+```
+
+---
+
 ## Progress Roadmap
 
 - [x] **Sprint 1: Foundation & Authentication** (Vite + FastAPI setup, Postgres + Redis setup, JWT authentication, Redis JWT logout denylist, and Account models).
-- [ ] **Sprint 2: Data Ingestion & Dashboard** (CSV uploads, parsed deduplication in-memory, metrics aggregations).
-- [ ] **Sprint 3: AI Chat Integration** (OpenAI prompt design, memory retrieval, rate limits).
-- [ ] **Sprint 4: Polish & Deployment** (Staging setups, Docker production builds).
+- [x] **Sprint 2: Data Ingestion & Dashboard** (CSV statement upload, parsed in-memory deduplication, metrics aggregation).
+- [x] **Sprint 3: AI Chat Integration** (Google Gemini model integration, context-aware prompt engineering, rate limits).
+- [x] **Sprint 4: Savings Goals CRUD** (Target date goals creation, progressive fund management, dynamic dashboard safe-to-spend subtraction).
+- [x] **Sprint 5: Settings Panel & Cash Logs** (AI memory resetting, GDPR account deletions, manual expense logging, double-entry goal savings, budget exceeded alerts).
