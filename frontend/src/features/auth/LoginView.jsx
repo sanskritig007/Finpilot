@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { Lock, Mail } from 'lucide-react';
+import { DemoTourModal } from './DemoTourModal';
 
 export const LoginView = () => {
-  const { login, signup } = useAuth();
+  const { login, signup, loginSandbox } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,15 +91,34 @@ export const LoginView = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-4">
           <button
             onClick={() => { setIsSignup(!isSignup); setError(''); }}
-            className="text-xs text-finpilot-primary hover:underline font-semibold"
+            className="text-xs text-finpilot-primary hover:underline font-semibold block w-full"
           >
             {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </button>
+          
+          <div className="border-t border-slate-800 pt-4">
+            <button
+              onClick={() => {
+                setError('');
+                setShowTour(true);
+              }}
+              type="button"
+              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-4 py-2.5 rounded-lg w-full transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>💡 See How It Works / Product Tour</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      <DemoTourModal 
+        isOpen={showTour} 
+        onClose={() => setShowTour(false)} 
+        onStartSignup={() => { setIsSignup(true); }} 
+      />
     </div>
   );
 };

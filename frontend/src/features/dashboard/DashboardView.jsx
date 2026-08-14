@@ -95,6 +95,22 @@ export const DashboardView = () => {
           </div>
         </div>
 
+        {/* Sandbox Session Warning Banner */}
+        {localStorage.getItem('finpilot_is_sandbox') === 'true' && (
+          <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 text-blue-400 text-sm font-semibold">
+            <div className="flex items-center gap-3">
+              <span className="shrink-0 h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
+              <span>💡 You are in Sandbox Mode. Test manual entries, edit categories, and chat with FinPilot! Any changes are temporary.</span>
+            </div>
+            <button
+              onClick={logout}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-500/20 shrink-0"
+            >
+              Create Account
+            </button>
+          </div>
+        )}
+
         {/* Budget Warning Banners */}
         {(() => {
           const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;

@@ -37,6 +37,14 @@ export const AuthProvider = ({ children }) => {
     await login(email, password);
   };
 
+  const loginSandbox = async () => {
+    const response = await api.post('/auth/sandbox');
+    const { access_token } = response.data;
+    localStorage.setItem('finpilot_token', access_token);
+    localStorage.setItem('finpilot_is_sandbox', 'true');
+    setIsAuthenticated(true);
+  };
+
   const logout = async () => {
     const token = localStorage.getItem('finpilot_token');
     if (token) {
@@ -47,11 +55,12 @@ export const AuthProvider = ({ children }) => {
       }
     }
     localStorage.removeItem('finpilot_token');
+    localStorage.removeItem('finpilot_is_sandbox');
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, signup, logout, loginSandbox }}>
       {children}
     </AuthContext.Provider>
   );
