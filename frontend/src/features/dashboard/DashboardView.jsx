@@ -115,7 +115,7 @@ export const DashboardView = () => {
         {(() => {
           const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
           const totalBalanceVal = parseFloat(summary.total_balance) || 0;
-          const isExceeded = safeToSpendVal <= 0;
+          const isExceeded = safeToSpendVal < 0;
           const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
           
           if (isExceeded) {
@@ -144,7 +144,7 @@ export const DashboardView = () => {
           {(() => {
             const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
             const totalBalanceVal = parseFloat(summary.total_balance) || 0;
-            const isExceeded = safeToSpendVal <= 0;
+            const isExceeded = safeToSpendVal < 0;
             const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
             
             let cardBg = "bg-gradient-to-br from-blue-900/60 to-slate-900/90 border border-blue-500/30";
