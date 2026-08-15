@@ -14,20 +14,44 @@ router = APIRouter()
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_csv(
     file: UploadFile = File(...),
+    mapping_date: Optional[str] = Query(None),
+    mapping_desc: Optional[str] = Query(None),
+    mapping_amount: Optional[str] = Query(None),
+    mapping_debit: Optional[str] = Query(None),
+    mapping_credit: Optional[str] = Query(None),
+    mapping_category: Optional[str] = Query(None),
+    mapping_type: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload a bank statement CSV file, parse and import non-duplicate transactions."""
+    """Upload a bank statement CSV file, parse and import non-duplicate transactions using optional mapping."""
     if not file.filename.endswith('.csv'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only CSV files are supported."
         )
         
+    mapping_dict = None
+    if mapping_date:
+        mapping_dict = {
+            "date": mapping_date,
+            "description": mapping_desc,
+            "amount": mapping_amount,
+            "debit": mapping_debit,
+            "credit": mapping_credit,
+            "category": mapping_category,
+            "type": mapping_type
+        }
+        mapping_dict = {k: v for k, v in mapping_dict.items() if v is not None}
+        
     contents = await file.read()
     
     try:
-        parsed_txs = csv_parser.parse_csv_stream(user_id=current_user.id, file_content=contents)
+        parsed_txs = csv_parser.parse_csv_stream(
+            user_id=current_user.id,
+            file_content=contents,
+            mapping=mapping_dict
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

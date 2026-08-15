@@ -3,7 +3,7 @@ import io
 import hashlib
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from sqlalchemy.orm import Session
 from app.models.transaction import Transaction
 
@@ -46,7 +46,7 @@ def parse_date(val: str) -> datetime.date:
             continue
     raise ValueError(f"Could not parse date: {val}")
 
-def parse_csv_stream(user_id: str, file_content: bytes) -> List[Dict]:
+def parse_csv_stream(user_id: str, file_content: bytes, mapping: Optional[Dict[str, str]] = None) -> List[Dict]:
     """Parse raw CSV bytes in-memory and return a list of mapped transaction dicts."""
     # Decode bytes to string
     try:
@@ -74,17 +74,25 @@ def parse_csv_stream(user_id: str, file_content: bytes) -> List[Dict]:
             raise ValueError(f"Missing required column matching: {names}")
         return -1
 
+    # Helper to resolve mapped column or fallback to search
+    def get_column_idx(key: str, fallback_names: List[str], required: bool = True) -> int:
+        if mapping and mapping.get(key):
+            target_name = mapping[key].strip().lower()
+            if target_name in headers:
+                return headers.index(target_name)
+            raise ValueError(f"Mapped column '{mapping[key]}' not found in CSV headers: {headers}")
+        return find_column(fallback_names, required)
+
     # Locate column indexes
-    idx_date = find_column(['date', 'txn date', 'transaction date', 'value date'])
-    idx_desc = find_column(['description', 'narration', 'particulars', 'info'])
+    idx_date = get_column_idx('date', ['date', 'txn date', 'transaction date', 'value date'])
+    idx_desc = get_column_idx('description', ['description', 'narration', 'particulars', 'info'])
     
-    # Try finding amount, or fallback to debit/credit split
-    idx_amount = find_column(['amount', 'value', 'transaction amount'], required=False)
-    idx_debit = find_column(['debit', 'withdrawal', 'dr'], required=False)
-    idx_credit = find_column(['credit', 'deposit', 'cr'], required=False)
+    idx_amount = get_column_idx('amount', ['amount', 'value', 'transaction amount'], required=False)
+    idx_debit = get_column_idx('debit', ['debit', 'withdrawal', 'dr'], required=False)
+    idx_credit = get_column_idx('credit', ['credit', 'deposit', 'cr'], required=False)
     
-    idx_category = find_column(['category', 'genre'], required=False)
-    idx_type = find_column(['dr/cr', 'd/c', 'type', 'transaction type'], required=False)
+    idx_category = get_column_idx('category', ['category', 'genre'], required=False)
+    idx_type = get_column_idx('type', ['dr/cr', 'd/c', 'type', 'transaction type'], required=False)
 
     if idx_amount == -1 and (idx_debit == -1 or idx_credit == -1):
         raise ValueError("CSV must contain either an 'amount' column or both 'debit' and 'credit' columns")
