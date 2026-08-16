@@ -23,14 +23,60 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
     category: 'Uncategorized',
     description: ''
   });
+  const [hasManuallySelected, setHasManuallySelected] = useState(false);
+  const [isAutoSuggested, setIsAutoSuggested] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
+  const guessCategory = (description, type) => {
+    const desc = description.trim().toLowerCase();
+    if (!desc) return 'Uncategorized';
+
+    if (type === 'income') {
+      if (['salary', 'paycheck', 'wages', 'stipend', 'bonus', 'credit'].some(k => desc.includes(k))) return 'Salary';
+      if (['refund', 'cashback', 'reversal', 'returned'].some(k => desc.includes(k))) return 'Refund';
+    }
+
+    if (['swiggy', 'zomato', 'starbucks', 'mcdonald', 'burger', 'pizza', 'kfc', 'cafe', 'restaurant', 'dining', 'food', 'tea', 'coffee', 'chai', 'bakery', 'subway', 'domino'].some(k => desc.includes(k))) return 'Food & Dining';
+    if (['amazon', 'flipkart', 'myntra', 'shopping', 'retail', 'decathlon', 'clothing', 'fashion', 'store', 'mall', 'supermarket', 'grocery', 'groceries', 'instamart', 'blinkit', 'zepto', 'dmart', 'market'].some(k => desc.includes(k))) return 'Shopping';
+    if (['rent', 'housing', 'landlord', 'maintenance', 'society', 'pg', 'hostel', 'lease'].some(k => desc.includes(k))) return 'Rent & Housing';
+    if (['netflix', 'spotify', 'prime video', 'disney', 'hotstar', 'youtube premium', 'movie', 'cinema', 'pvr', 'inox', 'bookmyshow', 'ticket', 'gaming', 'steam', 'playstation', 'xbox', 'pubg', 'club'].some(k => desc.includes(k))) return 'Entertainment';
+    if (['electricity', 'water', 'wifi', 'broadband', 'phone bill', 'recharge', 'jio', 'airtel', 'vi ', 'gas', 'cylinder', 'power', 'utility', 'insurance', 'premium'].some(k => desc.includes(k))) return 'Bills & Utilities';
+    if (['uber', 'ola', 'auto', 'petrol', 'fuel', 'shell', 'travel', 'irctc', 'flight', 'airline', 'metro', 'bus', 'cab', 'taxi', 'rapido', 'makemytrip', 'goibibo', 'toll', 'fastag'].some(k => desc.includes(k))) return 'Travel & Transport';
+    if (['saved to', 'saving', 'investment', 'mutual fund', 'groww', 'zerodha', 'stocks', 'etf', 'sip', 'fd ', 'fixed deposit', 'recurring deposit'].some(k => desc.includes(k))) return 'Investment';
+    if (['refund', 'cashback', 'reversal'].some(k => desc.includes(k))) return 'Refund';
+
+    return 'Uncategorized';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      
+      if (name === 'description' || name === 'type') {
+        if (!hasManuallySelected) {
+          const guessed = guessCategory(updated.description, updated.type);
+          if (guessed !== 'Uncategorized') {
+            updated.category = guessed;
+            setIsAutoSuggested(true);
+          } else {
+            updated.category = 'Uncategorized';
+            setIsAutoSuggested(false);
+          }
+        }
+      }
+      
+      if (name === 'category') {
+        setHasManuallySelected(true);
+        setIsAutoSuggested(false);
+      }
+      
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -66,6 +112,8 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         category: 'Uncategorized',
         description: ''
       });
+      setHasManuallySelected(false);
+      setIsAutoSuggested(false);
 
       onSuccess();
       onClose();
@@ -150,8 +198,13 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
 
             {/* Category */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                Category
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex justify-between items-center">
+                <span>Category</span>
+                {isAutoSuggested && (
+                  <span className="text-[10px] text-finpilot-primary font-bold animate-pulse lowercase">
+                    ✨ auto-suggested
+                  </span>
+                )}
               </label>
               <select
                 name="category"
