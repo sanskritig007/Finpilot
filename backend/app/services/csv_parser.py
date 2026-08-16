@@ -106,7 +106,6 @@ def parse_csv_stream(user_id: str, file_content: bytes, mapping: Optional[Dict[s
         try:
             date_val = parse_date(row[idx_date])
             desc_val = row[idx_desc].strip()
-            category_val = row[idx_category].strip() if idx_category != -1 and len(row) > idx_category else "Uncategorized"
             
             # Determine amount and type
             if idx_amount != -1 and len(row) > idx_amount:
@@ -140,6 +139,12 @@ def parse_csv_stream(user_id: str, file_content: bytes, mapping: Optional[Dict[s
                     # Both empty, skip row
                     continue
             
+            # Now resolve category with auto-categorization fallback
+            category_val = row[idx_category].strip() if idx_category != -1 and len(row) > idx_category else "Uncategorized"
+            if not category_val or category_val == "Uncategorized":
+                from app.services.categorizer import predict_category
+                category_val = predict_category(desc_val, type_val)
+
             # Generate unique hash for deduplication
             tx_hash = generate_transaction_hash(
                 user_id=str(user_id),

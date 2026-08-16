@@ -23,12 +23,17 @@ def create_manual_transaction(db: Session, user_id: UUID, tx_data: TransactionCr
     if existing:
         raise ValueError("A transaction with these exact details already exists.")
 
+    category_to_save = tx_data.category
+    if not category_to_save or category_to_save == "Uncategorized":
+        from app.services.categorizer import predict_category
+        category_to_save = predict_category(tx_data.description, tx_data.type)
+
     db_tx = Transaction(
         user_id=user_id,
         date=tx_data.date,
         amount=tx_data.amount,
         type=tx_data.type,
-        category=tx_data.category,
+        category=category_to_save,
         description=tx_data.description,
         transaction_hash=tx_hash
     )
