@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.schemas.dashboard_schema import DashboardSummary
+from app.schemas.dashboard_schema import DashboardSummary, DashboardInsights
 from app.services import finance_logic
 
 # pyrefly: ignore [missing-import]
@@ -68,3 +68,13 @@ def set_opening_balance(
         
     db.commit()
     return {"message": "Balance updated", "current_balance": account.current_balance}
+
+from app.services import ai_service
+
+@router.get("/insights", response_model=DashboardInsights)
+def get_dashboard_insights(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieve Gemini-powered budget insights and coaching tips."""
+    return ai_service.generate_financial_insights(db, current_user.id)
