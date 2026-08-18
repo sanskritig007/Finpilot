@@ -2,7 +2,8 @@ import React from 'react';
 import { Sparkles, RefreshCw, AlertCircle, Quote } from 'lucide-react';
 
 export const AICoachCard = ({ insights, loading, onRefresh }) => {
-  if (loading) {
+  // Only show skeleton loader on initial fetch (when we don't have insights data yet)
+  if (loading && !insights) {
     return (
       <div className="bg-gradient-to-br from-slate-900/60 to-slate-950/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 animate-pulse">
         <div className="flex items-center justify-between">
@@ -31,7 +32,7 @@ export const AICoachCard = ({ insights, loading, onRefresh }) => {
   if (!insights) return null;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900/40 to-slate-950/70 border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+    <div className={`bg-gradient-to-br from-slate-900/40 to-slate-950/70 border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-all duration-300 ${loading ? 'opacity-70 pointer-events-none' : ''}`}>
       
       {/* Background Gradient Orbs */}
       <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-finpilot-primary/5 blur-3xl group-hover:bg-finpilot-primary/10 transition-colors duration-500"></div>
@@ -49,10 +50,11 @@ export const AICoachCard = ({ insights, loading, onRefresh }) => {
         </div>
         <button
           onClick={onRefresh}
-          className="p-1.5 rounded-lg border border-slate-850 bg-slate-900 text-finpilot-muted hover:text-white hover:border-slate-700 transition-all shadow-md active:scale-95 flex items-center justify-center"
+          disabled={loading}
+          className={`p-1.5 rounded-lg border border-slate-850 bg-slate-900 text-finpilot-muted hover:text-white hover:border-slate-700 transition-all shadow-md active:scale-95 flex items-center justify-center ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
           title="Regenerate Insights"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
         </button>
       </div>
 

@@ -36,7 +36,7 @@ export const DashboardView = () => {
   const fetchInsights = async () => {
     setInsightsLoading(true);
     try {
-      const response = await api.get('/dashboard/insights');
+      const response = await api.get(`/dashboard/insights?nocache=${Date.now()}`);
       setInsights(response.data);
     } catch (err) {
       console.error('Error fetching AI insights:', err);
