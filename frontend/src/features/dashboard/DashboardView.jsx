@@ -8,6 +8,7 @@ import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle
 import { GoalsList } from '../goals/GoalsList';
 import { SettingsModal } from './SettingsModal';
 import { AddTransactionModal } from '../transactions/AddTransactionModal';
+import { AICoachCard } from './AICoachCard';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -24,10 +25,25 @@ export const DashboardView = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [openingBalance, setOpeningBalance] = useState('');
   const [showBalanceForm, setShowBalanceForm] = useState(false);
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(true);
 
   useEffect(() => {
     fetchSummary();
+    fetchInsights();
   }, [refreshTrigger]);
+
+  const fetchInsights = async () => {
+    setInsightsLoading(true);
+    try {
+      const response = await api.get('/dashboard/insights');
+      setInsights(response.data);
+    } catch (err) {
+      console.error('Error fetching AI insights:', err);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const fetchSummary = async () => {
     try {
@@ -242,6 +258,13 @@ export const DashboardView = () => {
           </div>
 
         </div>
+
+        {/* AI Insights Card */}
+        <AICoachCard
+          insights={insights}
+          loading={insightsLoading}
+          onRefresh={fetchInsights}
+        />
 
         {/* Main Workspace Layout (Transactions & Goals Grid) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
