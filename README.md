@@ -107,11 +107,27 @@ Finpilot/
 
 ## Running Tests
 
-To run the backend unit tests for manual transaction flows and logic validations:
+To run the complete backend integration and unit test suite (covering manual transaction flows, sandbox seeding, CSV mappings, and AI insights):
 ```bash
 cd backend
-PYTHONPATH=. venv/bin/python -m unittest tests/test_manual_transactions.py
+PYTHONPATH=. venv/bin/python -m unittest discover tests
 ```
+
+---
+
+## Core Features
+
+### 1. Universal CSV Column Mapper
+Ingest statements from any bank. When uploading, the app parses columns locally, pops open a mapping overlay, guesses headers automatically, and supports single value columns or split Debit/Credit layouts.
+
+### 2. AI Smart Auto-Categorization
+No more manual tagging. Typing description words in manual entry or uploading statements automatically classifies rows (e.g., Swiggy/Zomato -> Food & Dining, Uber/Ola -> Travel & Transport) in real-time on the frontend and backend.
+
+### 3. AI Advisor Coach
+A dedicated dashboard container displaying Gemini-powered personal budget analyses, actionable financial recommendation lists, and custom encouragement quotes. Includes cache-busting manual refresh updates.
+
+### 4. Strict Financial Guardrails
+The AI Chat Companion is strictly constrained to personal finance, transaction history reviews, and goal planning, rejecting general chat, coding, or GK queries to prevent token depletion.
 
 ---
 
@@ -122,3 +138,4 @@ PYTHONPATH=. venv/bin/python -m unittest tests/test_manual_transactions.py
 - [x] **Sprint 3: AI Chat Integration** (Google Gemini model integration, context-aware prompt engineering, rate limits).
 - [x] **Sprint 4: Savings Goals CRUD** (Target date goals creation, progressive fund management, dynamic dashboard safe-to-spend subtraction).
 - [x] **Sprint 5: Settings Panel & Cash Logs** (AI memory resetting, GDPR account deletions, manual expense logging, double-entry goal savings, budget exceeded alerts).
+- [x] **Sprint 6: Universal Mapping, AI Auto-Categorization & Coach Insights** (Universal CSV Column mapping modal, split/single columns support, rule-based real-time category auto-guessing, Gemini AI Advisor card with cache-busting refresh, strict financial chat guardrails, and product features tour slideshow modal).
