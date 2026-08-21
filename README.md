@@ -129,6 +129,9 @@ A dedicated dashboard container displaying Gemini-powered personal budget analys
 ### 4. Strict Financial Guardrails
 The AI Chat Companion is strictly constrained to personal finance, transaction history reviews, and goal planning, rejecting general chat, coding, or GK queries to prevent token depletion.
 
+### 5. Interactive Features Tour
+Clicking "Explore Demo" on the login portal launches a premium slideshow guiding the user through the platform's features in detail, explaining how to utilize the AI insights, and prompting them to register a free account to persist their financial data.
+
 ---
 
 ## Progress Roadmap
