@@ -1,7 +1,20 @@
 import re
 
 def predict_category(description: str, tx_type: str) -> str:
-    """Predict transaction category based on description keywords and transaction type."""
+    """
+    Predict transaction category based on description keywords and transaction type.
+    
+    Supported Categories:
+    - Food & Dining: Swiggy, Zomato, Starbucks, Dominos, Cafes, restaurants.
+    - Shopping: Amazon, Flipkart, Myntra, retail, groceries.
+    - Rent & Housing: House rent,PG, maintenance bills.
+    - Salary: Inflow credits (stipend, wages, salary).
+    - Entertainment: Subscriptions (Netflix, Spotify), cinemas.
+    - Bills & Utilities: Mobile recharges, electricity, utility bills.
+    - Travel & Transport: Uber, Ola, petrol, tolls, flights.
+    - Investment: Vault savings, mutual funds, stock SIPs.
+    - Refund: Cashbacks and transaction reversals.
+    """
     desc = description.strip().lower()
     
     # 1. Check type-based overrides first

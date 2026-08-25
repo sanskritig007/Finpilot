@@ -31,6 +31,7 @@ export const AICoachCard = ({ insights, loading, onRefresh }) => {
 
   if (!insights) return null;
 
+  // Render glassmorphic card container with transition opacity layers during background refresh calls
   return (
     <div className={`bg-gradient-to-br from-slate-900/40 to-slate-950/70 border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-all duration-300 ${loading ? 'opacity-70 pointer-events-none' : ''}`}>
       
