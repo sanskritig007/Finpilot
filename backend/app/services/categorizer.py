@@ -1,4 +1,5 @@
 import re
+# Heuristic categorization helper for prompt engineering models.
 
 def predict_category(description: str, tx_type: str) -> str:
     """
