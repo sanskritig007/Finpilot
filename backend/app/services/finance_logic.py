@@ -1,3 +1,4 @@
+"""Core financial computation engine — balance aggregation, goal locking, and safe-to-spend calculations."""
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from decimal import Decimal
