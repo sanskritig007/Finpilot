@@ -1,4 +1,5 @@
 import csv
+# Service helper to parse and validate ingested bank statement CSV records.
 import io
 import hashlib
 from datetime import datetime
