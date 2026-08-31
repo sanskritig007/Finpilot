@@ -3,6 +3,7 @@ import api from '../../core/api';
 import { AddGoalModal } from './AddGoalModal';
 import { Target, Trash2, Plus, DollarSign, Check, X, Calendar } from 'lucide-react';
 
+// Savings goals management component with progress tracking and vault allocations
 export const GoalsList = ({ refreshTrigger, onUpdate }) => {
   const [goals, setGoals] = useState([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
