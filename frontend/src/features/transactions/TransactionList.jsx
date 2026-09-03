@@ -50,76 +50,80 @@ export const TransactionList = ({ refreshTrigger }) => {
   };
 
   return (
-    <div className="bg-finpilot-card rounded-xl border border-slate-700 overflow-hidden">
-      <div className="p-6 border-b border-slate-700 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Transaction History</h3>
+    <div className="rounded-[18px] bg-[#161617] border border-white/[0.08] overflow-hidden">
+      {/* Header */}
+      <div className="p-5 md:p-6 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 className="text-base font-semibold text-white tracking-[-0.02em]">Transaction Ledger</h3>
+          <p className="text-xs text-[#86868b] font-normal mt-0.5">Ingested statements & manual logs</p>
+        </div>
         
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-finpilot-muted">Filter by Category:</span>
+        <div className="flex items-center gap-2.5">
           <select
             value={filterCategory}
             onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
-            className="bg-slate-800 border border-slate-700 text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
+            className="apple-press bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white text-xs px-3.5 py-1.5 rounded-full focus:outline-none focus:border-[#0066cc] cursor-pointer transition-colors"
           >
-            <option value="">All Categories</option>
+            <option value="" className="bg-[#1d1d1f]">All Categories</option>
             {CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat} className="bg-[#1d1d1f]">{cat}</option>
             ))}
           </select>
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-800/40 text-xs font-bold text-finpilot-muted uppercase border-b border-slate-700">
-              <th className="px-6 py-4">Transaction</th>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Category</th>
-              <th className="px-6 py-4 text-right">Amount</th>
+            <tr className="bg-black/20 text-[11px] font-semibold text-[#86868b] uppercase tracking-wider border-b border-white/[0.06]">
+              <th className="px-6 py-3.5">Description</th>
+              <th className="px-6 py-3.5">Date</th>
+              <th className="px-6 py-3.5">Category</th>
+              <th className="px-6 py-3.5 text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-white/[0.04]">
             {loading ? (
               <tr>
-                <td colSpan="4" className="text-center py-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-finpilot-primary mx-auto"></div>
+                <td colSpan="4" className="text-center py-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/20 border-t-[#0066cc] mx-auto"></div>
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center py-12 text-sm text-finpilot-muted">
-                  No transactions imported yet. Click "Upload CSV" above to get started.
+                <td colSpan="4" className="text-center py-14 text-xs text-[#86868b]">
+                  No transaction records found. Upload a statement to begin.
                 </td>
               </tr>
             ) : (
               transactions.map(tx => (
-                <tr key={tx.id} className="hover:bg-slate-800/20 transition-colors text-sm">
+                <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors text-xs">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                        {tx.type === 'income' ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
+                      <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/[0.06] text-neutral-400'}`}>
+                        {tx.type === 'income' ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
                       </div>
-                      <span className="font-semibold text-white max-w-xs truncate" title={tx.description}>
+                      <span className="font-normal text-[#f5f5f7] max-w-xs truncate" title={tx.description}>
                         {tx.description}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-finpilot-muted font-medium whitespace-nowrap">
+                  <td className="px-6 py-4 text-[#86868b] whitespace-nowrap">
                     {tx.date}
                   </td>
                   <td className="px-6 py-4">
                     <select
                       value={tx.category}
                       onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
-                      className="bg-slate-800/60 border border-slate-700/60 text-white text-xs px-2.5 py-1 rounded focus:outline-none focus:ring-1 focus:ring-finpilot-primary cursor-pointer hover:bg-slate-800 transition-colors"
+                      className="bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.06] text-[#f5f5f7] text-[11px] px-2.5 py-1 rounded-full focus:outline-none focus:border-[#0066cc] cursor-pointer transition-colors"
                     >
                       {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat} className="bg-[#1d1d1f]">{cat}</option>
                       ))}
                     </select>
                   </td>
-                  <td className={`px-6 py-4 text-right font-bold whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-400' : 'text-white'}`}>
+                  <td className={`px-6 py-4 text-right font-medium whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-400' : 'text-white'}`}>
                     {tx.type === 'income' ? '+' : '-'} ₹{parseFloat(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
@@ -129,24 +133,25 @@ export const TransactionList = ({ refreshTrigger }) => {
         </table>
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="p-4 border-t border-slate-700 flex items-center justify-between gap-4">
+        <div className="p-4 border-t border-white/[0.08] flex items-center justify-between gap-4">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-1.5 border border-slate-700 text-finpilot-muted rounded-lg hover:text-white transition-colors disabled:opacity-50"
+            className="apple-press h-8 w-8 rounded-full border border-white/[0.08] bg-white/[0.04] text-[#86868b] hover:text-white flex items-center justify-center transition-colors disabled:opacity-30"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-xs text-finpilot-muted">
-            Page <span className="text-white font-bold">{page}</span> of {totalPages}
+          <span className="text-[11px] text-[#86868b]">
+            Page <span className="text-white font-medium">{page}</span> of {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-1.5 border border-slate-700 text-finpilot-muted rounded-lg hover:text-white transition-colors disabled:opacity-50"
+            className="apple-press h-8 w-8 rounded-full border border-white/[0.08] bg-white/[0.04] text-[#86868b] hover:text-white flex items-center justify-center transition-colors disabled:opacity-30"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       )}

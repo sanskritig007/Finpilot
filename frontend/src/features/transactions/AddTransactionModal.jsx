@@ -59,18 +59,18 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
       
       if (name === 'description' || name === 'type') {
         if (!hasManuallySelected) {
-          const guessed = guessCategory(updated.description, updated.type);
+          const guessed = guessCategory(
+            name === 'description' ? value : prev.description,
+            name === 'type' ? value : prev.type
+          );
           if (guessed !== 'Uncategorized') {
             updated.category = guessed;
             setIsAutoSuggested(true);
           } else {
-            updated.category = 'Uncategorized';
             setIsAutoSuggested(false);
           }
         }
-      }
-      
-      if (name === 'category') {
+      } else if (name === 'category') {
         setHasManuallySelected(true);
         setIsAutoSuggested(false);
       }
@@ -81,40 +81,20 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.description || !formData.amount || !formData.date) return;
+    
+    setIsSubmitting(true);
     setError('');
 
-    // Validations
-    if (!formData.description.trim()) {
-      setError('Description is required.');
-      return;
-    }
-    const parsedAmount = parseFloat(formData.amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError('Amount must be a positive number greater than 0.');
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      await api.post('/transactions/', {
+      await api.post('/transactions/manual', {
         date: formData.date,
-        amount: parsedAmount,
+        amount: parseFloat(formData.amount),
         type: formData.type,
         category: formData.category,
-        description: formData.description.trim()
+        description: formData.description
       });
-
-      // Reset Form
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        type: 'expense',
-        category: 'Uncategorized',
-        description: ''
-      });
-      setHasManuallySelected(false);
-      setIsAutoSuggested(false);
-
+      
       onSuccess();
       onClose();
     } catch (err) {
@@ -127,20 +107,20 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-xl shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+      <div className="bg-[#161617] border border-white/[0.1] w-full max-w-md p-6 md:p-8 rounded-[22px] shadow-[0_30px_70px_rgba(0,0,0,0.8)] relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          className="apple-press absolute top-5 right-5 h-7 w-7 rounded-full text-[#86868b] hover:text-white flex items-center justify-center"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </button>
 
-        <h3 className="text-xl font-bold text-white mb-6">Add Manual Transaction</h3>
+        <h3 className="text-lg font-semibold text-white tracking-[-0.02em] mb-6">Log Transaction</h3>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded mb-5 flex items-start gap-2.5 text-sm">
-            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+          <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-3 rounded-[12px] mb-5 flex items-start gap-2 text-xs">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
             <span>{error}</span>
           </div>
         )}
@@ -148,8 +128,8 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Description / Payee
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5">
+              Payee / Description
             </label>
             <input
               type="text"
@@ -157,14 +137,14 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
               value={formData.description}
               onChange={handleChange}
               placeholder="e.g. Local Tea Shop, HDFC Salary"
-              className="w-full bg-slate-850 border border-slate-750 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-[12px] px-3.5 py-2.5 text-xs text-white placeholder-[#86868b] focus:outline-none focus:border-[#0066cc]"
               required
             />
           </div>
 
           {/* Amount */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5">
               Amount (₹)
             </label>
             <input
@@ -174,35 +154,35 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
               value={formData.amount}
               onChange={handleChange}
               placeholder="0.00"
-              className="w-full bg-slate-850 border border-slate-750 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-[12px] px-3.5 py-2.5 text-xs text-white placeholder-[#86868b] focus:outline-none focus:border-[#0066cc]"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3.5">
             {/* Type */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5">
                 Type
               </label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full bg-slate-850 border border-slate-750 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-finpilot-primary cursor-pointer"
+                className="w-full bg-white/[0.06] border border-white/[0.08] rounded-[12px] px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#0066cc] cursor-pointer"
               >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
+                <option value="expense" className="bg-[#1d1d1f]">Expense</option>
+                <option value="income" className="bg-[#1d1d1f]">Income</option>
               </select>
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex justify-between items-center">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5 flex justify-between items-center">
                 <span>Category</span>
                 {isAutoSuggested && (
-                  <span className="text-[10px] text-finpilot-primary font-bold animate-pulse lowercase">
-                    ✨ auto-suggested
+                  <span className="text-[10px] text-[#2997ff] font-normal lowercase">
+                    auto-detected
                   </span>
                 )}
               </label>
@@ -210,10 +190,10 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full bg-slate-850 border border-slate-750 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-finpilot-primary cursor-pointer"
+                className="w-full bg-white/[0.06] border border-white/[0.08] rounded-[12px] px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#0066cc] cursor-pointer"
               >
                 {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat} className="bg-[#1d1d1f]">{cat}</option>
                 ))}
               </select>
             </div>
@@ -221,7 +201,7 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Date */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5">
               Date
             </label>
             <input
@@ -229,26 +209,26 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
               name="date"
               value={formData.date}
               onChange={handleChange}
-              className="w-full bg-slate-850 border border-slate-750 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-[12px] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#0066cc]"
               required
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end pt-4 mt-6 border-t border-slate-800">
+          <div className="flex gap-2.5 justify-end pt-4 mt-6 border-t border-white/[0.08]">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm font-medium"
+              className="apple-press px-4 py-2 rounded-full text-[#86868b] hover:text-white transition-colors text-xs font-normal"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-lg text-white font-medium bg-finpilot-primary hover:bg-finpilot-primary-hover disabled:opacity-50 transition-colors text-sm"
+              className="apple-press px-5 py-2 rounded-full text-white font-medium bg-[#0066cc] hover:bg-[#0071e3] disabled:opacity-40 transition-colors text-xs"
             >
-              {isSubmitting ? 'Saving...' : 'Add Transaction'}
+              {isSubmitting ? 'Saving...' : 'Add Entry'}
             </button>
           </div>
         </form>

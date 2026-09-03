@@ -1,16 +1,87 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @theme {
-  --color-finpilot-dark: #0f172a;
-  --color-finpilot-card: #1e293b;
-  --color-finpilot-primary: #3b82f6;
-  --color-finpilot-primary-hover: #2563eb;
-  --color-finpilot-text: #f8fafc;
-  --color-finpilot-muted: #94a3b8;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+  --color-apple-blue: #0066cc;
+  --color-apple-blue-hover: #0071e3;
+  --color-apple-blue-dark: #2997ff;
+  --color-apple-canvas: #000000;
+  --color-apple-bg: #101012;
+  --color-apple-tile: #161617;
+  --color-apple-tile-sub: #1d1d1f;
+  --color-apple-tile-card: #252527;
+  --color-apple-text: #f5f5f7;
+  --color-apple-muted: #86868b;
+  --color-apple-hairline: rgba(255, 255, 255, 0.08);
+  --color-apple-hairline-strong: rgba(255, 255, 255, 0.14);
+
+  /* Maintain backward compatibility alias */
+  --color-finpilot-dark: #0d0d0e;
+  --color-finpilot-card: #161617;
+  --color-finpilot-primary: #0066cc;
+  --color-finpilot-primary-hover: #0071e3;
+  --color-finpilot-text: #f5f5f7;
+  --color-finpilot-muted: #86868b;
 }
 
 @layer base {
-  body {
-    @apply bg-finpilot-dark text-finpilot-text antialiased;
+  * {
+    border-color: var(--color-apple-hairline);
   }
+  
+  html, body {
+    font-family: var(--font-sans);
+    background-color: var(--color-apple-bg);
+    color: var(--color-apple-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss03", "cv02", "cv11";
+  }
+
+  /* Apple Negative Tracking Display Typography */
+  h1, h2, h3, .apple-tight {
+    letter-spacing: -0.024em;
+  }
+
+  p, span, button, input {
+    letter-spacing: -0.011em;
+  }
+}
+
+/* Apple Micro-Interactions & Glass Utilities */
+.apple-press {
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.12s ease;
+}
+
+.apple-press:active {
+  transform: scale(0.96);
+}
+
+.apple-frosted {
+  background-color: rgba(22, 22, 23, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.apple-frosted-dark {
+  background-color: rgba(12, 12, 13, 0.82);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+}
+
+/* Custom Subtle Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }

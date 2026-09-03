@@ -32,7 +32,7 @@ export const ChatWidget = ({ resetTrigger }) => {
       {
         id: 'initial',
         role: 'assistant',
-        content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+        content: 'Hi! I am FinPilot, your dedicated financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
       }
     ],
     onError: (err) => {
@@ -63,7 +63,7 @@ export const ChatWidget = ({ resetTrigger }) => {
         {
           id: 'initial',
           role: 'assistant',
-          content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+          content: 'Hi! I am FinPilot, your dedicated financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
         }
       ]);
       setShowSettings(false);
@@ -102,7 +102,7 @@ export const ChatWidget = ({ resetTrigger }) => {
         {
           id: 'initial',
           role: 'assistant',
-          content: 'Hi! I am FinPilot, your AI financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
+          content: 'Hi! I am FinPilot, your dedicated financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
         }
       ]);
     }
@@ -124,13 +124,11 @@ export const ChatWidget = ({ resetTrigger }) => {
     return content.split('\n').map((line, lineIdx) => {
       let temp = line.trim();
       
-      // Check if bullet line
       const isBullet = temp.startsWith('* ') || temp.startsWith('- ');
       if (isBullet) {
         temp = temp.substring(2);
       }
       
-      // Parse **bold** parts
       const parts = [];
       const boldRegex = /\*\*(.*?)\*\*/g;
       let lastIndex = 0;
@@ -140,7 +138,7 @@ export const ChatWidget = ({ resetTrigger }) => {
         if (match.index > lastIndex) {
           parts.push(temp.substring(lastIndex, match.index));
         }
-        parts.push(<strong key={match.index} className="font-bold text-white">{match[1]}</strong>);
+        parts.push(<strong key={match.index} className="font-semibold text-white">{match[1]}</strong>);
         lastIndex = boldRegex.lastIndex;
       }
       
@@ -152,15 +150,15 @@ export const ChatWidget = ({ resetTrigger }) => {
       
       if (isBullet) {
         return (
-          <div key={lineIdx} className="flex items-start gap-2 ml-2 my-1">
-            <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-finpilot-primary"></span>
-            <span className="text-slate-100">{contentEl}</span>
+          <div key={lineIdx} className="flex items-start gap-2 ml-1.5 my-1">
+            <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-[#0066cc]"></span>
+            <span className="text-neutral-200">{contentEl}</span>
           </div>
         );
       }
       
       return (
-        <p key={lineIdx} className="min-h-[1rem] my-0.5 text-slate-100">
+        <p key={lineIdx} className="min-h-[1rem] my-0.5 text-neutral-200">
           {contentEl}
         </p>
       );
@@ -170,116 +168,113 @@ export const ChatWidget = ({ resetTrigger }) => {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       
-      {/* Floating Toggle Button */}
+      {/* Floating Launcher Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-finpilot-primary hover:bg-finpilot-primary-hover text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center justify-center animate-bounce-subtle"
+          className="apple-press h-12 w-12 rounded-full bg-[#0066cc] hover:bg-[#0071e3] text-white flex items-center justify-center shadow-[0_12px_32px_rgba(0,102,204,0.35)] transition-all"
+          title="Open Assistant"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare className="h-5 w-5" />
         </button>
       )}
 
       {/* Expanded Chat Window */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[400px] h-[500px] bg-finpilot-card border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+        <div className="w-[350px] sm:w-[380px] h-[520px] rounded-[22px] bg-[#161617] border border-white/[0.1] shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden">
           
           {/* Header */}
-          <div className="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between">
+          <div className="apple-frosted border-b border-white/[0.08] p-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
               <div>
-                <h4 className="text-sm font-bold text-white leading-none">FinPilot AI</h4>
-                <span className="text-[10px] text-finpilot-muted mt-0.5 block">AI Companion</span>
+                <h4 className="text-xs font-semibold text-white tracking-[-0.02em]">FinPilot Assistant</h4>
+                <span className="text-[10px] text-[#86868b] block">Financial Intelligence</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className={`transition-colors ${showSettings ? 'text-white' : 'text-finpilot-muted hover:text-white'}`}
-                title="AI & Account Settings"
+                className={`apple-press h-7 w-7 rounded-full flex items-center justify-center transition-colors ${showSettings ? 'bg-white/[0.12] text-white' : 'text-[#86868b] hover:text-white'}`}
+                title="Settings"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => {
                   setIsOpen(false);
                   setShowSettings(false);
                 }}
-                className="text-finpilot-muted hover:text-white transition-colors"
+                className="apple-press h-7 w-7 rounded-full text-[#86868b] hover:text-white flex items-center justify-center"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           </div>
 
           {showSettings ? (
             /* Settings View */
-            <div className="flex-1 bg-slate-900 p-6 flex flex-col justify-between overflow-y-auto">
+            <div className="flex-1 bg-[#161617] p-6 flex flex-col justify-between overflow-y-auto">
               <div className="space-y-6">
                 <div>
-                  <h5 className="text-sm font-bold text-white mb-1">AI Assistant Settings</h5>
-                  <p className="text-xs text-finpilot-muted">Manage your AI context and account preferences.</p>
+                  <h5 className="text-xs font-semibold text-white uppercase tracking-wider">Assistant Settings</h5>
+                  <p className="text-[11px] text-[#86868b] mt-0.5">Manage conversation memory and limits.</p>
                 </div>
                 
-                {/* Actions */}
-                <div className="space-y-4 pt-4 border-t border-slate-800">
-                  
-                  {/* Clear AI Memory */}
+                <div className="space-y-4 pt-2 border-t border-white/[0.08]">
+                  {/* Reset Memory */}
                   <div className="space-y-2">
                     <button
                       onClick={handleClearMemory}
                       disabled={isClearing}
-                      className="w-full bg-slate-850 hover:bg-slate-800 text-white font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-750 transition-all disabled:opacity-50"
+                      className="apple-press w-full bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs py-2 px-4 rounded-full flex items-center justify-center gap-2 border border-white/[0.08] transition-all disabled:opacity-50"
                     >
-                      <RefreshCw className={`h-3.5 w-3.5 ${isClearing ? 'animate-spin' : ''}`} />
-                      <span>{isClearing ? 'Clearing Memory...' : 'Reset AI Memory'}</span>
+                      <RefreshCw className={`h-3 w-3 ${isClearing ? 'animate-spin' : ''}`} />
+                      <span>{isClearing ? 'Clearing...' : 'Reset Chat Memory'}</span>
                     </button>
-                    <p className="text-[10px] text-finpilot-muted leading-relaxed">
-                      Deletes current conversational context and resets your hourly prompt limits to start a fresh chat.
+                    <p className="text-[10px] text-[#86868b] leading-relaxed">
+                      Clears conversational context and resets prompt limits.
                     </p>
                   </div>
 
                   {/* Permanent Account Deletion */}
-                  <div className="space-y-2 pt-4 border-t border-slate-800">
+                  <div className="space-y-2 pt-4 border-t border-white/[0.08]">
                     <button
                       onClick={handleDeleteAccount}
                       disabled={isDeleting}
-                      className="w-full bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 hover:text-red-300 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                      className="apple-press w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs py-2 px-4 rounded-full flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>{isDeleting ? 'Deleting Account...' : 'Delete Account Permanently'}</span>
+                      <Trash2 className="h-3 w-3" />
+                      <span>{isDeleting ? 'Deleting...' : 'Delete Account'}</span>
                     </button>
-                    <p className="text-[10px] text-red-500/80 leading-relaxed font-medium">
-                      Warning: This will permanently wipe your profile, linked bank details, goals, and transaction history. This action is irreversible.
+                    <p className="text-[10px] text-red-400/70 leading-relaxed">
+                      Irreversibly removes profile, statements, and vaults.
                     </p>
                   </div>
-
                 </div>
               </div>
 
-              {/* Back Button */}
               <button
                 onClick={() => setShowSettings(false)}
-                className="w-full bg-finpilot-primary hover:bg-finpilot-primary-hover text-white text-xs font-semibold py-2.5 rounded-xl transition-all mt-4"
+                className="apple-press w-full bg-[#0066cc] hover:bg-[#0071e3] text-white text-xs font-normal py-2 rounded-full transition-all mt-4"
               >
-                Back to Chat
+                Return to Chat
               </button>
             </div>
           ) : (
             <>
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/20">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#101012]">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                      className={`max-w-[82%] rounded-[18px] px-3.5 py-2.5 text-xs leading-relaxed ${
                         msg.role === 'user'
-                          ? 'bg-finpilot-primary text-white rounded-br-none'
-                          : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60'
+                          ? 'bg-[#0066cc] text-white rounded-br-[4px]'
+                          : 'bg-[#1d1d1f] text-neutral-200 rounded-bl-[4px] border border-white/[0.08]'
                       }`}
                     >
                       <div className="space-y-1">{formatMessage(getMessageText(msg))}</div>
@@ -289,18 +284,18 @@ export const ChatWidget = ({ resetTrigger }) => {
                 
                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
                   <div className="flex justify-start">
-                    <div className="bg-slate-800 border border-slate-700/60 rounded-2xl rounded-bl-none px-4 py-3 flex gap-1 items-center">
-                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="h-1.5 w-1.5 rounded-full bg-finpilot-muted animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    <div className="bg-[#1d1d1f] border border-white/[0.08] rounded-[18px] rounded-bl-[4px] px-3.5 py-2.5 flex gap-1 items-center">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#86868b] animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#86868b] animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#86868b] animate-bounce" style={{ animationDelay: '300ms' }}></span>
                     </div>
                   </div>
                 )}
 
                 {error && (
-                  <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg flex items-start gap-2.5 text-xs">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span>{error.message || 'Failed to send message. Make sure your server is online.'}</span>
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-2.5 rounded-[12px] flex items-start gap-2 text-xs">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-400" />
+                    <span>{error.message || 'Failed to send message.'}</span>
                   </div>
                 )}
                 
@@ -308,27 +303,27 @@ export const ChatWidget = ({ resetTrigger }) => {
               </div>
 
               {/* Input Form */}
-              <form onSubmit={handleSubmit} className="p-3 bg-slate-900/60 border-t border-slate-800 flex gap-2">
+              <form onSubmit={handleSubmit} className="p-3 bg-[#161617] border-t border-white/[0.08] flex gap-2">
                 <input
                   type="text"
                   value={input || ''}
                   onChange={handleInputChange}
                   placeholder="Ask FinPilot..."
                   disabled={isLoading}
-                  className="flex-1 bg-slate-850 border border-slate-750 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-finpilot-primary disabled:opacity-50"
+                  className="flex-1 bg-white/[0.06] border border-white/[0.08] rounded-full px-3.5 py-1.5 text-xs text-white placeholder-[#86868b] focus:outline-none focus:border-[#0066cc] disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   disabled={isLoading || !input || !input.trim()}
-                  className="bg-finpilot-primary hover:bg-finpilot-primary-hover disabled:opacity-50 text-white p-2 rounded-xl transition-all flex items-center justify-center shrink-0"
+                  className="apple-press h-8 w-8 bg-[#0066cc] hover:bg-[#0071e3] disabled:opacity-40 text-white rounded-full flex items-center justify-center shrink-0 transition-all"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" />
                 </button>
               </form>
               
               {/* Rate Limit Notice */}
-              <div className="bg-slate-950 p-2 border-t border-slate-800 text-[10px] text-finpilot-muted flex items-center justify-center gap-1.5 font-medium">
-                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+              <div className="bg-[#101012] py-1.5 px-3 border-t border-white/[0.06] text-[10px] text-[#86868b] flex items-center justify-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 text-[#2997ff]" />
                 <span>Rate limit: 20 prompts / hour</span>
               </div>
             </>

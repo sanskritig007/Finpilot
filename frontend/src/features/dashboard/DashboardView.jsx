@@ -4,7 +4,7 @@ import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { Wallet, ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
 import { SettingsModal } from './SettingsModal';
 import { AddTransactionModal } from '../transactions/AddTransactionModal';
@@ -68,198 +68,183 @@ export const DashboardView = () => {
     }
   };
 
+  const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
+  const totalBalanceVal = parseFloat(summary.total_balance) || 0;
+  const goalsLockedVal = parseFloat(summary.active_goals_locked) || 0;
+  const isExceeded = safeToSpendVal < 0;
+  const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
+
   return (
-    <div className="min-h-screen bg-finpilot-dark text-finpilot-text p-6 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* Top Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">FinPilot AI</h1>
-            <p className="text-finpilot-muted text-sm mt-1">Intelligent financial companion & analytics</p>
+    <div className="min-h-screen bg-[#101012] text-[#f5f5f7] pb-16">
+      
+      {/* Apple Sub-Nav: Frosted Top Bar */}
+      <header className="sticky top-0 z-40 apple-frosted border-b border-white/[0.08] px-6 md:px-10 py-3.5 transition-all">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-baseline gap-3">
+            <span className="text-lg font-semibold tracking-[-0.03em] text-white">FinPilot</span>
+            <span className="hidden sm:inline-block text-xs text-[#86868b] font-normal">Intelligent Finance Studio</span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsAddTransactionOpen(true)}
-              className="bg-slate-800 hover:bg-slate-750 hover:text-white border border-slate-700 text-slate-200 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-md transition-all flex items-center gap-2"
+              className="apple-press bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.08] text-xs font-normal px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all"
             >
-              <Plus className="h-4 w-4" />
-              <span>Add Transaction</span>
+              <Plus className="h-3.5 w-3.5 opacity-80" />
+              <span>Log Entry</span>
             </button>
             <button
               onClick={() => setIsUploadOpen(true)}
-              className="bg-finpilot-primary hover:bg-finpilot-primary-hover text-white font-semibold text-sm px-5 py-2.5 rounded-lg shadow-lg hover:shadow-blue-500/20 transition-all flex items-center gap-2"
+              className="apple-press bg-[#0066cc] hover:bg-[#0071e3] text-white text-xs font-normal px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-none"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               <span>Upload CSV</span>
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-finpilot-muted hover:text-white p-2.5 rounded-lg transition-colors"
+              className="apple-press h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#86868b] hover:text-white border border-white/[0.06] flex items-center justify-center transition-colors ml-1"
               title="Settings"
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={logout}
-              className="bg-slate-800 hover:bg-slate-700 text-finpilot-muted hover:text-white p-2.5 rounded-lg transition-colors"
+              className="apple-press h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#86868b] hover:text-white border border-white/[0.06] flex items-center justify-center transition-colors"
               title="Sign Out"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
+      </header>
 
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-6 md:px-10 pt-8 space-y-8">
+        
         {/* Sandbox Session Warning Banner */}
         {localStorage.getItem('finpilot_is_sandbox') === 'true' && (
-          <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 text-blue-400 text-sm font-semibold">
-            <div className="flex items-center gap-3">
-              <span className="shrink-0 h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
-              <span>💡 You are in Sandbox Mode. Test manual entries, edit categories, and chat with FinPilot! Any changes are temporary.</span>
+          <div className="bg-[#1d1d1f] border border-blue-500/20 p-4 rounded-[16px] flex flex-wrap items-center justify-between gap-4 text-xs font-normal text-blue-300">
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-[#2997ff] animate-pulse"></span>
+              <span><strong>Sandbox Mode:</strong> Testing session active. Data is ephemeral.</span>
             </div>
             <button
               onClick={logout}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-500/20 shrink-0"
+              className="apple-press bg-[#0066cc] hover:bg-[#0071e3] text-white text-xs font-normal px-3.5 py-1.5 rounded-full transition-all"
             >
               Create Account
             </button>
           </div>
         )}
 
-        {/* Budget Warning Banners */}
-        {(() => {
-          const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
-          const totalBalanceVal = parseFloat(summary.total_balance) || 0;
-          const isExceeded = safeToSpendVal < 0;
-          const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
-          
-          if (isExceeded) {
-            return (
-              <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center gap-3 text-red-400 text-sm font-semibold animate-pulse">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <span>Alert: You have exceeded your Safe to Spend budget! Consider postponing non-essential shopping or adjusting your savings goals.</span>
-              </div>
-            );
-          }
-          if (isWarning) {
-            return (
-              <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex items-center gap-3 text-amber-400 text-sm font-medium">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <span>Warning: Your Safe to Spend balance is running low (less than 15% of your total balance). Watch your spending!</span>
-              </div>
-            );
-          }
-          return null;
-        })()}
+        {/* Budget Warning Banner */}
+        {isExceeded && (
+          <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-[16px] flex items-center gap-3 text-red-300 text-xs font-normal">
+            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+            <span><strong>Safe to Spend Exceeded:</strong> Current burn rate exceeds your available cushion. Consider postponing non-essential purchases.</span>
+          </div>
+        )}
+        {isWarning && (
+          <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-[16px] flex items-center gap-3 text-amber-300 text-xs font-normal">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+            <span><strong>Low Runway:</strong> Available safe-to-spend is below 15% of total liquidity.</span>
+          </div>
+        )}
 
-        {/* Info Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Apple Hero Studio Tile ("Apple Card" Safe to Spend Showcase) */}
+        <div className="relative rounded-[22px] bg-[#161617] border border-white/[0.08] p-8 md:p-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.6)]">
           
-          {/* Card 1: Safe To Spend */}
-          {(() => {
-            const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
-            const totalBalanceVal = parseFloat(summary.total_balance) || 0;
-            const isExceeded = safeToSpendVal < 0;
-            const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            let cardBg = "bg-gradient-to-br from-blue-900/60 to-slate-900/90 border border-blue-500/30";
-            let glowBg = "bg-blue-500/10 group-hover:bg-blue-500/20";
-            let iconWrapper = "bg-blue-500/10 text-blue-400";
-            let descText = "Available balance safe for daily expenses";
-            let descColor = "text-finpilot-muted";
-            
-            if (isExceeded) {
-              cardBg = "bg-gradient-to-br from-red-950/40 to-slate-900/90 border border-red-500/40";
-              glowBg = "bg-red-500/10 group-hover:bg-red-500/20";
-              iconWrapper = "bg-red-500/15 text-red-400";
-              descText = "🚨 Alert: Safe to Spend budget exceeded!";
-              descColor = "text-red-400/90 font-medium";
-            } else if (isWarning) {
-              cardBg = "bg-gradient-to-br from-amber-950/40 to-slate-900/90 border border-amber-500/40";
-              glowBg = "bg-amber-500/10 group-hover:bg-amber-500/20";
-              iconWrapper = "bg-amber-500/15 text-amber-400";
-              descText = "⚠️ Warning: Budget is running low (under 15%)";
-              descColor = "text-amber-400/90 font-medium";
-            }
-            
-            return (
-              <div className={`${cardBg} p-6 rounded-xl shadow-2xl relative overflow-hidden group`}>
-                <div className={`absolute top-0 right-0 w-32 h-32 ${glowBg} rounded-full blur-3xl transition-all`}></div>
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <span className="text-finpilot-muted font-bold text-xs uppercase tracking-wider">Safe To Spend</span>
-                  <div className={`p-2 rounded-lg ${iconWrapper}`}>
-                    <ShieldCheck className="h-5 w-5" />
+            {/* Left: Huge Hero Number */}
+            <div className="lg:col-span-7 space-y-2">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#2997ff]" />
+                <span>Safe To Spend</span>
+              </div>
+              
+              <div className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.035em] text-white font-sans">
+                ₹{safeToSpendVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </div>
+              
+              <p className="text-xs text-[#86868b] font-normal pt-1">
+                Net available daily allowance after subtracting locked targets & fixed obligations.
+              </p>
+            </div>
+
+            {/* Right: Balance & Goals Mini Utility Cards */}
+            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              
+              {/* Total Balance Card */}
+              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-5 space-y-3 relative group">
+                <div className="flex items-center justify-between text-[#86868b]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Total Balance</span>
+                  <button
+                    onClick={() => setShowBalanceForm(!showBalanceForm)}
+                    className="apple-press p-1 text-[#86868b] hover:text-white transition-colors"
+                    title="Edit Opening Balance"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {showBalanceForm ? (
+                  <form onSubmit={handleUpdateBalance} className="space-y-2">
+                    <input
+                      type="number"
+                      placeholder="Amount..."
+                      value={openingBalance}
+                      onChange={(e) => setOpeningBalance(e.target.value)}
+                      className="bg-black/50 border border-white/[0.14] text-white text-xs rounded-lg px-2.5 py-1.5 w-full focus:outline-none focus:border-[#0066cc]"
+                      required
+                      autoFocus
+                    />
+                    <div className="flex gap-1.5">
+                      <button
+                        type="submit"
+                        className="apple-press bg-[#0066cc] text-white text-[10px] font-medium px-3 py-1 rounded-full"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowBalanceForm(false)}
+                        className="apple-press bg-white/[0.08] text-[#86868b] text-[10px] px-2.5 py-1 rounded-full"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    <div className="text-xl font-semibold tracking-[-0.02em] text-white">
+                      ₹{totalBalanceVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
+                    <span className="text-[10px] text-[#86868b] block mt-1">Verified bank balance</span>
                   </div>
-                </div>
-                <h2 className="text-3xl font-black text-white relative z-10">
-                  ₹{parseFloat(summary.safe_to_spend).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </h2>
-                <p className={`text-xs ${descColor} mt-2 relative z-10`}>{descText}</p>
+                )}
               </div>
-            );
-          })()}
 
-          {/* Card 2: Total Balance */}
-          <div className="bg-slate-900/50 backdrop-blur-md border border-slate-700/80 p-6 rounded-xl shadow-xl relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-finpilot-muted font-bold text-xs uppercase tracking-wider">Total Balance</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowBalanceForm(!showBalanceForm)}
-                  className="p-1 text-finpilot-muted hover:text-white transition-colors"
-                  title="Update Current Balance"
-                >
-                  <Edit3 className="h-4 w-4" />
-                </button>
-                <div className="p-2 rounded-lg bg-slate-800 text-finpilot-muted">
-                  <Wallet className="h-5 w-5" />
+              {/* Goals Locked Card */}
+              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-5 space-y-3">
+                <div className="flex items-center justify-between text-[#86868b]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Goals Locked</span>
+                  <Lock className="h-3.5 w-3.5 text-[#86868b]" />
+                </div>
+                <div>
+                  <div className="text-xl font-semibold tracking-[-0.02em] text-white">
+                    ₹{goalsLockedVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <span className="text-[10px] text-[#86868b] block mt-1">Reserved for active vaults</span>
                 </div>
               </div>
-            </div>
-            
-            {showBalanceForm ? (
-              <form onSubmit={handleUpdateBalance} className="flex gap-2 relative z-10">
-                <input
-                  type="number"
-                  placeholder="Current balance..."
-                  value={openingBalance}
-                  onChange={(e) => setOpeningBalance(e.target.value)}
-                  className="bg-slate-800 border border-slate-750 text-white text-sm rounded px-3 py-1 w-full focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-finpilot-primary text-white text-xs font-bold px-3 py-1 rounded hover:bg-finpilot-primary-hover transition-colors"
-                >
-                  Set
-                </button>
-              </form>
-            ) : (
-              <h2 className="text-3xl font-black text-white">
-                ₹{parseFloat(summary.total_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </h2>
-            )}
-            <p className="text-xs text-finpilot-muted mt-2">Combined bank balance + statement deposits</p>
-          </div>
 
-          {/* Card 3: Goals Locked */}
-          <div className="bg-slate-900/50 backdrop-blur-md border border-slate-700/80 p-6 rounded-xl shadow-xl relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-finpilot-muted font-bold text-xs uppercase tracking-wider">Goals Locked</span>
-              <div className="p-2 rounded-lg bg-slate-800 text-finpilot-muted">
-                <Lock className="h-5 w-5" />
-              </div>
             </div>
-            <h2 className="text-3xl font-black text-white">
-              ₹{parseFloat(summary.active_goals_locked).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </h2>
-            <p className="text-xs text-finpilot-muted mt-2">Monthly savings target required for active goals</p>
-          </div>
 
+          </div>
         </div>
 
-        {/* AI Insights Card */}
+        {/* AI Advisor Insights Editorial Tile */}
         <AICoachCard
           insights={insights}
           loading={insightsLoading}
@@ -267,11 +252,11 @@ export const DashboardView = () => {
         />
 
         {/* Main Workspace Layout (Transactions & Goals Grid) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8">
             <TransactionList refreshTrigger={refreshTrigger} />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-4">
             <GoalsList 
               refreshTrigger={refreshTrigger} 
               onUpdate={() => setRefreshTrigger(prev => prev + 1)} 
@@ -279,31 +264,29 @@ export const DashboardView = () => {
           </div>
         </div>
 
-        {/* Upload Statement Modal */}
+        {/* Modals & Dialogs */}
         <UploadModal
           isOpen={isUploadOpen}
           onClose={() => setIsUploadOpen(false)}
           onUploadSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
 
-        {/* Settings Modal */}
         <SettingsModal
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
           onResetChat={() => setChatResetTrigger(prev => prev + 1)}
         />
 
-        {/* Add Manual Transaction Modal */}
         <AddTransactionModal
           isOpen={isAddTransactionOpen}
           onClose={() => setIsAddTransactionOpen(false)}
           onSuccess={() => setRefreshTrigger(prev => prev + 1)}
         />
 
-        {/* Floating AI Chat Assistant */}
+        {/* Floating AI Assistant */}
         <ChatWidget resetTrigger={chatResetTrigger} />
 
-      </div>
+      </main>
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../core/api';
 import { AddGoalModal } from './AddGoalModal';
-import { Target, Trash2, Plus, DollarSign, Check, X, Calendar } from 'lucide-react';
+import { Trash2, Plus, DollarSign, Check, Calendar } from 'lucide-react';
 
-// Savings goals management component with progress tracking and vault allocations
+// Savings goals management component with Apple aesthetic
 export const GoalsList = ({ refreshTrigger, onUpdate }) => {
   const [goals, setGoals] = useState([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -77,12 +77,8 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
     const today = new Date();
     const target = new Date(targetDate);
     
-    // Calculate difference in months
     let months = (target.getFullYear() - today.getFullYear()) * 12 + (target.getMonth() - today.getMonth());
-    
-    if (months <= 0) {
-      months = 1;
-    }
+    if (months <= 0) months = 1;
     
     const remaining = parseFloat(targetAmount) - parseFloat(currentAmount);
     if (remaining <= 0) return 0;
@@ -91,29 +87,29 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
   };
 
   return (
-    <div className="bg-slate-900/50 backdrop-blur-md border border-slate-700/80 rounded-xl p-6 shadow-xl space-y-6">
+    <div className="rounded-[18px] bg-[#161617] border border-white/[0.08] p-5 md:p-6 space-y-5">
       
-      {/* Title Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-finpilot-primary" />
-          <h3 className="text-lg font-bold text-white">Savings Goals</h3>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div>
+          <h3 className="text-base font-semibold text-white tracking-[-0.02em]">Savings Vaults</h3>
+          <p className="text-xs text-[#86868b] font-normal">Dedicated capital targets</p>
         </div>
         <button
           onClick={() => setIsAddOpen(true)}
-          className="p-1.5 rounded-lg bg-finpilot-primary/10 hover:bg-finpilot-primary/25 text-finpilot-primary hover:text-white transition-all"
-          title="Add New Goal"
+          className="apple-press h-7 w-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.06] flex items-center justify-center transition-colors"
+          title="Add New Vault"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Goals Cards List */}
-      <div className="space-y-4 max-h-[480px] overflow-y-auto pr-1">
+      {/* Vaults List */}
+      <div className="space-y-3.5 max-h-[480px] overflow-y-auto pr-0.5">
         {goals.length === 0 ? (
-          <div className="text-center py-8 text-finpilot-muted text-sm">
-            <p>No active savings goals.</p>
-            <p className="text-xs mt-1">Click the + icon to configure one.</p>
+          <div className="text-center py-10 text-[#86868b] text-xs">
+            <p>No active savings vaults configured.</p>
+            <p className="mt-1">Tap + to establish a savings target.</p>
           </div>
         ) : (
           goals.map((goal) => {
@@ -123,40 +119,40 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
             return (
               <div 
                 key={goal.id} 
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-[14px] border transition-all ${
                   isCompleted 
-                    ? 'bg-emerald-950/20 border-emerald-500/20 shadow-md shadow-emerald-500/5' 
-                    : 'bg-slate-850/50 border-slate-750 hover:border-slate-700'
+                    ? 'bg-emerald-950/20 border-emerald-500/20' 
+                    : 'bg-[#1d1d1f] border-white/[0.08]'
                 }`}
               >
                 
-                {/* Header Information */}
+                {/* Vault Title & Actions */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                    <h4 className="font-medium text-xs text-white flex items-center gap-1.5">
                       <span>{goal.name}</span>
                       {isCompleted && (
-                        <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                          <Check className="h-3 w-3" /> Done
+                        <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                          <Check className="h-2.5 w-2.5" /> Fulfilled
                         </span>
                       )}
                     </h4>
                     {goal.target_date && (
                       <>
-                        <p className="text-[10px] text-finpilot-muted flex items-center gap-1 mt-0.5">
-                          <Calendar className="h-3 w-3" />
-                          <span>Target: {formatDate(goal.target_date)}</span>
+                        <p className="text-[10px] text-[#86868b] flex items-center gap-1 mt-0.5">
+                          <Calendar className="h-2.5 w-2.5 opacity-70" />
+                          <span>Maturity: {formatDate(goal.target_date)}</span>
                         </p>
                         {!isCompleted && (
-                          <p className="text-[10px] text-finpilot-primary/90 font-semibold mt-1">
-                            💡 Save ₹{getMonthlyRecommendation(goal.target_amount, goal.current_amount, goal.target_date).toLocaleString('en-IN')}/mo
+                          <p className="text-[10px] text-[#2997ff] font-normal mt-1">
+                            Save ₹{getMonthlyRecommendation(goal.target_amount, goal.current_amount, goal.target_date).toLocaleString('en-IN')}/mo
                           </p>
                         )}
                       </>
                     )}
                   </div>
                   
-                  {/* Action Buttons */}
+                  {/* Action Icons */}
                   <div className="flex items-center gap-1">
                     {!isCompleted && (
                       <button
@@ -164,71 +160,70 @@ export const GoalsList = ({ refreshTrigger, onUpdate }) => {
                           setFundingGoalId(fundingGoalId === goal.id ? null : goal.id);
                           setFundAmount('');
                         }}
-                        className={`p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors ${
-                          fundingGoalId === goal.id ? 'bg-slate-700 text-white' : 'hover:bg-slate-800'
+                        className={`apple-press p-1.5 rounded-full text-[#86868b] hover:text-white transition-colors ${
+                          fundingGoalId === goal.id ? 'bg-white/[0.12] text-white' : 'hover:bg-white/[0.06]'
                         }`}
                         title="Add Funds"
                       >
-                        <DollarSign className="h-3.5 w-3.5" />
+                        <DollarSign className="h-3 w-3" />
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(goal.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="apple-press p-1.5 rounded-full text-[#86868b] hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Delete Goal"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
                 </div>
 
                 {/* Progress Indicators */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-finpilot-muted">
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-[#86868b]">
                       ₹{parseFloat(goal.current_amount).toLocaleString('en-IN')} / ₹{parseFloat(goal.target_amount).toLocaleString('en-IN')}
                     </span>
-                    <span className={`font-bold ${isCompleted ? 'text-emerald-400' : 'text-finpilot-primary'}`}>
+                    <span className={`font-medium ${isCompleted ? 'text-emerald-400' : 'text-[#2997ff]'}`}>
                       {progress}%
                     </span>
                   </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full transition-all duration-550 ${
-                        isCompleted ? 'bg-emerald-500' : 'bg-finpilot-primary'
+                      className={`h-full transition-all duration-500 ${
+                        isCompleted ? 'bg-emerald-500' : 'bg-[#0066cc]'
                       }`}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Inline Add Funds Drawer */}
+                {/* Inline Add Funds */}
                 {fundingGoalId === goal.id && (
-                  <div className="mt-3.5 pt-3 border-t border-slate-800 flex gap-2 items-center">
+                  <div className="mt-3 pt-3 border-t border-white/[0.06] flex gap-2 items-center">
                     <input
                       type="number"
-                      placeholder="Amount to save..."
+                      placeholder="Amount to deposit..."
                       value={fundAmount}
                       onChange={(e) => setFundAmount(e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-750 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-finpilot-primary"
+                      className="flex-1 bg-black/50 border border-white/[0.12] text-white text-[11px] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#0066cc]"
+                      autoFocus
                     />
                     <button
                       onClick={() => handleAddFunds(goal)}
                       disabled={loadingId === goal.id || !fundAmount}
-                      className="p-1.5 bg-finpilot-primary text-white rounded-lg hover:bg-finpilot-primary-hover disabled:opacity-50 transition-colors"
-                      title="Save Amount"
+                      className="apple-press px-2.5 py-1 bg-[#0066cc] text-white text-[10px] font-medium rounded-full hover:bg-[#0071e3] disabled:opacity-40 transition-colors"
                     >
-                      <Check className="h-3.5 w-3.5" />
+                      Save
                     </button>
                     <button
                       onClick={() => {
                         setFundingGoalId(null);
                         setFundAmount('');
                       }}
-                      className="p-1.5 border border-slate-750 text-slate-400 rounded-lg hover:text-white transition-colors"
-                      title="Cancel"
+                      className="apple-press px-2 py-1 text-[#86868b] text-[10px] rounded-full hover:text-white"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      Cancel
                     </button>
                   </div>
                 )}

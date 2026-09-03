@@ -101,97 +101,97 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-        <div className="bg-finpilot-card w-full max-w-md p-6 rounded-xl border border-slate-700 shadow-2xl relative">
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+        <div className="bg-[#161617] w-full max-w-md p-6 md:p-8 rounded-[22px] border border-white/[0.1] shadow-[0_30px_70px_rgba(0,0,0,0.8)] relative">
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-finpilot-muted hover:text-white transition-colors"
+            className="apple-press absolute top-5 right-5 h-7 w-7 rounded-full text-[#86868b] hover:text-white flex items-center justify-center"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
 
-          <h3 className="text-xl font-bold text-white mb-6">Upload Bank Statement</h3>
+          <h3 className="text-lg font-semibold text-white tracking-[-0.02em] mb-6">Upload Bank Statement</h3>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded mb-6 flex items-start gap-2.5 text-sm">
-              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-3 rounded-[12px] mb-5 flex items-start gap-2 text-xs">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
               <span>{error}</span>
             </div>
           )}
 
           {result && (
-            <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 p-4 rounded mb-6 text-sm space-y-2">
-              <div className="flex items-center gap-2.5 font-semibold text-white">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+            <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 p-3.5 rounded-[14px] mb-5 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-medium text-white">
+                <CheckCircle className="h-4 w-4 text-emerald-400" />
                 <span>{result.message}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-700/50 text-finpilot-muted">
-                <div>Imported: <span className="text-white font-bold">{result.total_imported}</span></div>
-                <div>Skipped (Dup): <span className="text-white font-bold">{result.duplicates_skipped}</span></div>
+              <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-emerald-500/20 text-[#86868b]">
+                <div>Imported: <span className="text-white font-medium">{result.total_imported}</span></div>
+                <div>Skipped (Dup): <span className="text-white font-medium">{result.duplicates_skipped}</span></div>
               </div>
             </div>
           )}
 
           {/* Column Mapping Summary */}
           {mappings && (
-            <div className="bg-slate-800/40 p-3 rounded-lg border border-slate-700/60 text-xs space-y-1 mb-6">
-              <div className="flex justify-between items-center text-[10px] font-bold text-finpilot-primary uppercase tracking-wider">
-                <span>✓ Mapped Columns Configured</span>
+            <div className="bg-white/[0.04] p-3 rounded-[14px] border border-white/[0.08] text-xs space-y-1 mb-5">
+              <div className="flex justify-between items-center text-[10px] font-semibold text-[#2997ff] uppercase tracking-wider">
+                <span>✓ Schema Mapping Configured</span>
                 <button 
                   type="button" 
                   onClick={() => setShowMappingModal(true)}
-                  className="hover:underline text-white font-semibold flex items-center gap-1"
+                  className="hover:underline text-white font-normal flex items-center gap-1"
                 >
                   <Settings className="h-3 w-3" />
-                  <span>Edit</span>
+                  <span>Configure</span>
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-finpilot-muted mt-1.5">
-                <div>Date: <span className="text-slate-200">{mappings.date}</span></div>
-                <div>Desc: <span className="text-slate-200">{mappings.description}</span></div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[#86868b] text-[11px] mt-1.5">
+                <div>Date: <span className="text-[#f5f5f7]">{mappings.date}</span></div>
+                <div>Desc: <span className="text-[#f5f5f7]">{mappings.description}</span></div>
                 {mappings.amount ? (
-                  <div className="col-span-2">Amount: <span className="text-slate-200">{mappings.amount}</span></div>
+                  <div className="col-span-2">Amount: <span className="text-[#f5f5f7]">{mappings.amount}</span></div>
                 ) : (
                   <>
-                    <div>Debit: <span className="text-slate-200">{mappings.debit}</span></div>
-                    <div>Credit: <span className="text-slate-200">{mappings.credit}</span></div>
+                    <div>Debit: <span className="text-[#f5f5f7]">{mappings.debit}</span></div>
+                    <div>Credit: <span className="text-[#f5f5f7]">{mappings.credit}</span></div>
                   </>
                 )}
               </div>
             </div>
           )}
 
-          <form onSubmit={handleUpload} className="space-y-6">
-            <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center hover:border-finpilot-primary transition-colors cursor-pointer relative bg-slate-800/30">
+          <form onSubmit={handleUpload} className="space-y-5">
+            <div className="border border-dashed border-white/[0.14] rounded-[16px] p-6 text-center hover:bg-white/[0.03] transition-colors cursor-pointer relative bg-white/[0.02]">
               <input
                 type="file"
                 accept=".csv"
                 onChange={handleFileChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <Upload className="mx-auto h-10 w-10 text-finpilot-muted mb-3" />
-              <p className="text-sm text-white font-medium">
-                {file ? file.name : 'Click to upload or drag & drop'}
+              <Upload className="mx-auto h-8 w-8 text-[#86868b] mb-2.5 opacity-80" />
+              <p className="text-xs text-white font-medium">
+                {file ? file.name : 'Select CSV file from device'}
               </p>
-              <p className="text-xs text-finpilot-muted mt-1.5">
-                Only CSV files are supported.
+              <p className="text-[11px] text-[#86868b] mt-1">
+                Supports all standard bank statement formats.
               </p>
             </div>
 
-            <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
+            <div className="flex gap-2.5 justify-end pt-3 border-t border-white/[0.08]">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 border border-slate-700 text-finpilot-muted rounded-lg hover:text-white transition-colors"
+                className="apple-press px-4 py-2 text-xs font-normal text-[#86868b] hover:text-white rounded-full transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !file}
-                className="px-5 py-2 rounded-lg text-white font-medium bg-finpilot-primary hover:bg-finpilot-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="apple-press px-5 py-2 rounded-full text-white text-xs font-medium bg-[#0066cc] hover:bg-[#0071e3] transition-colors disabled:opacity-40"
               >
-                {loading ? 'Uploading...' : 'Import Data'}
+                {loading ? 'Ingesting...' : 'Import Statement'}
               </button>
             </div>
           </form>
