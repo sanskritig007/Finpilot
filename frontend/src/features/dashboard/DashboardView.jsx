@@ -4,8 +4,9 @@ import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle, Zap, Calendar } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
+import { CommitmentsList } from '../commitments/CommitmentsList';
 import { SettingsModal } from './SettingsModal';
 import { AddTransactionModal } from '../transactions/AddTransactionModal';
 import { AICoachCard } from './AICoachCard';
@@ -17,6 +18,9 @@ export const DashboardView = () => {
     active_goals_locked: 0,
     upcoming_fixed_expenses: 0,
     safe_to_spend: 0,
+    runway_months: 0,
+    monthly_burn: 0,
+    runway_status: 'healthy',
   });
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -71,6 +75,10 @@ export const DashboardView = () => {
   const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
   const totalBalanceVal = parseFloat(summary.total_balance) || 0;
   const goalsLockedVal = parseFloat(summary.active_goals_locked) || 0;
+  const fixedExpensesVal = parseFloat(summary.upcoming_fixed_expenses) || 0;
+  const runwayMonths = parseFloat(summary.runway_months) || 0;
+  const runwayStatus = summary.runway_status || 'healthy';
+
   const isExceeded = safeToSpendVal < 0;
   const isWarning = !isExceeded && totalBalanceVal > 0 && safeToSpendVal < (totalBalanceVal * 0.15);
 
@@ -151,16 +159,30 @@ export const DashboardView = () => {
           </div>
         )}
 
-        {/* Apple Hero Studio Tile ("Apple Card" Safe to Spend Showcase) */}
+        {/* Apple Hero Studio Tile ("Apple Card" Safe to Spend & Runway Showcase) */}
         <div className="relative rounded-[22px] bg-[#161617] border border-white/[0.08] p-8 md:p-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.6)]">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left: Huge Hero Number */}
-            <div className="lg:col-span-7 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#2997ff]" />
-                <span>Safe To Spend</span>
+            {/* Left: Huge Hero Number & Runway Badge */}
+            <div className="lg:col-span-6 space-y-3">
+              <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#2997ff]" />
+                  <span>Safe To Spend</span>
+                </div>
+                
+                {/* Runway Status Pill */}
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-normal tracking-normal lowercase ${
+                  runwayStatus === 'healthy' 
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : runwayStatus === 'caution'
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}>
+                  <Zap className="h-2.5 w-2.5" />
+                  <span>{runwayMonths >= 99 ? '∞' : runwayMonths} mo runway</span>
+                </span>
               </div>
               
               <div className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.035em] text-white font-sans">
@@ -168,23 +190,23 @@ export const DashboardView = () => {
               </div>
               
               <p className="text-xs text-[#86868b] font-normal pt-1">
-                Net available daily allowance after subtracting locked targets & fixed obligations.
+                Net discretionary allowance after deducting locked goals & upcoming fixed bills.
               </p>
             </div>
 
-            {/* Right: Balance & Goals Mini Utility Cards */}
-            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Right: Balance, Goals & Fixed Mini Utility Cards */}
+            <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
               
               {/* Total Balance Card */}
-              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-5 space-y-3 relative group">
+              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-2 relative group">
                 <div className="flex items-center justify-between text-[#86868b]">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider">Total Balance</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">Balance</span>
                   <button
                     onClick={() => setShowBalanceForm(!showBalanceForm)}
                     className="apple-press p-1 text-[#86868b] hover:text-white transition-colors"
                     title="Edit Opening Balance"
                   >
-                    <Edit3 className="h-3.5 w-3.5" />
+                    <Edit3 className="h-3 w-3" />
                   </button>
                 </div>
 
@@ -195,21 +217,21 @@ export const DashboardView = () => {
                       placeholder="Amount..."
                       value={openingBalance}
                       onChange={(e) => setOpeningBalance(e.target.value)}
-                      className="bg-black/50 border border-white/[0.14] text-white text-xs rounded-lg px-2.5 py-1.5 w-full focus:outline-none focus:border-[#0066cc]"
+                      className="bg-black/50 border border-white/[0.14] text-white text-xs rounded-lg px-2 py-1 w-full focus:outline-none focus:border-[#0066cc]"
                       required
                       autoFocus
                     />
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1">
                       <button
                         type="submit"
-                        className="apple-press bg-[#0066cc] text-white text-[10px] font-medium px-3 py-1 rounded-full"
+                        className="apple-press bg-[#0066cc] text-white text-[10px] font-medium px-2.5 py-0.5 rounded-full"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowBalanceForm(false)}
-                        className="apple-press bg-white/[0.08] text-[#86868b] text-[10px] px-2.5 py-1 rounded-full"
+                        className="apple-press bg-white/[0.08] text-[#86868b] text-[10px] px-2 py-0.5 rounded-full"
                       >
                         Cancel
                       </button>
@@ -217,25 +239,39 @@ export const DashboardView = () => {
                   </form>
                 ) : (
                   <div>
-                    <div className="text-xl font-semibold tracking-[-0.02em] text-white">
-                      ₹{totalBalanceVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    <div className="text-base font-semibold tracking-[-0.02em] text-white">
+                      ₹{totalBalanceVal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </div>
-                    <span className="text-[10px] text-[#86868b] block mt-1">Verified bank balance</span>
+                    <span className="text-[10px] text-[#86868b] block mt-0.5">Liquid capital</span>
                   </div>
                 )}
               </div>
 
               {/* Goals Locked Card */}
-              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-5 space-y-3">
+              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-2">
                 <div className="flex items-center justify-between text-[#86868b]">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider">Goals Locked</span>
-                  <Lock className="h-3.5 w-3.5 text-[#86868b]" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">Vaults</span>
+                  <Lock className="h-3 w-3 text-[#86868b]" />
                 </div>
                 <div>
-                  <div className="text-xl font-semibold tracking-[-0.02em] text-white">
-                    ₹{goalsLockedVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <div className="text-base font-semibold tracking-[-0.02em] text-white">
+                    ₹{goalsLockedVal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </div>
-                  <span className="text-[10px] text-[#86868b] block mt-1">Reserved for active vaults</span>
+                  <span className="text-[10px] text-[#86868b] block mt-0.5">Goals locked</span>
+                </div>
+              </div>
+
+              {/* Fixed Obligations Card */}
+              <div className="rounded-[18px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-2">
+                <div className="flex items-center justify-between text-[#86868b]">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">Fixed Bills</span>
+                  <Calendar className="h-3 w-3 text-[#86868b]" />
+                </div>
+                <div>
+                  <div className="text-base font-semibold tracking-[-0.02em] text-white">
+                    ₹{fixedExpensesVal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  </div>
+                  <span className="text-[10px] text-[#86868b] block mt-0.5">Due this cycle</span>
                 </div>
               </div>
 
@@ -251,12 +287,16 @@ export const DashboardView = () => {
           onRefresh={fetchInsights}
         />
 
-        {/* Main Workspace Layout (Transactions & Goals Grid) */}
+        {/* Main Workspace Layout (Transactions & Commitments/Goals Grid) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-7">
             <TransactionList refreshTrigger={refreshTrigger} />
           </div>
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5 space-y-8">
+            <CommitmentsList 
+              refreshTrigger={refreshTrigger} 
+              onUpdate={() => setRefreshTrigger(prev => prev + 1)} 
+            />
             <GoalsList 
               refreshTrigger={refreshTrigger} 
               onUpdate={() => setRefreshTrigger(prev => prev + 1)} 

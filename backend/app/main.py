@@ -2,6 +2,17 @@
 from fastapi import FastAPI
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
+from app.db.session import engine
+from app.models.base import Base
+# Ensure all models are imported so Base knows their schemas
+import app.models.user
+import app.models.account
+import app.models.transaction
+import app.models.goal
+import app.models.fixed_commitment
+
+# Auto-create tables if they do not exist
+Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -28,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.v1 import auth, transactions, dashboard, chat, goals
+from app.api.v1 import auth, transactions, dashboard, chat, goals, commitments
 
 @app.get("/health")
 def health_check():
@@ -39,4 +50,4 @@ app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["tr
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(goals.router, prefix="/api/v1/goals", tags=["goals"])
-
+app.include_router(commitments.router, prefix="/api/v1/commitments", tags=["commitments"])

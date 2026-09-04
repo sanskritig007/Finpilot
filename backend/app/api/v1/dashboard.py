@@ -28,12 +28,16 @@ def get_dashboard_summary(
     active_goals_locked = finance_logic.get_locked_goals_amount(db, current_user.id)
     upcoming_fixed_expenses = finance_logic.get_upcoming_fixed_expenses(db, current_user.id)
     safe_to_spend = finance_logic.get_safe_to_spend(db, current_user.id)
+    runway_data = finance_logic.get_financial_runway(db, current_user.id)
     
     return {
         "total_balance": total_balance,
         "active_goals_locked": active_goals_locked,
         "upcoming_fixed_expenses": upcoming_fixed_expenses,
-        "safe_to_spend": safe_to_spend
+        "safe_to_spend": safe_to_spend,
+        "runway_months": runway_data["runway_months"],
+        "monthly_burn": runway_data["monthly_burn"],
+        "runway_status": runway_data["runway_status"]
     }
 
 from sqlalchemy import func

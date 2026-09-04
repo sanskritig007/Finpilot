@@ -1,10 +1,14 @@
-"""Core financial computation engine — balance aggregation, goal locking, and safe-to-spend calculations."""
+"""Core financial computation engine — balance aggregation, goal locking, fixed obligations, and safe-to-spend calculations."""
+from datetime import date, timedelta
+from decimal import Decimal
+from typing import Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from decimal import Decimal
+
 from app.models.transaction import Transaction
 from app.models.goal import Goal
 from app.models.account import Account
+from app.models.fixed_commitment import FixedCommitment
 
 def get_total_balance(db: Session, user_id: str) -> Decimal:
     """Calculate the total bank balance across all user accounts plus transaction flows."""
@@ -12,7 +16,6 @@ def get_total_balance(db: Session, user_id: str) -> Decimal:
     account_sum = db.query(func.sum(Account.current_balance)).filter(Account.user_id == user_id).scalar() or Decimal('0.00')
     
     # 2. Calculate net flow from transactions (income - expense)
-    # Note: we only sum incomes and subtract expenses. We skip transfers.
     income_sum = db.query(func.sum(Transaction.amount))\
         .filter(Transaction.user_id == user_id)\
         .filter(Transaction.type == 'income').scalar() or Decimal('0.00')
@@ -22,8 +25,6 @@ def get_total_balance(db: Session, user_id: str) -> Decimal:
         .filter(Transaction.type == 'expense').scalar() or Decimal('0.00')
         
     return account_sum + income_sum - expense_sum
-
-from datetime import date
 
 def get_locked_goals_amount(db: Session, user_id: str) -> Decimal:
     """Calculate the sum of recommended per-month savings for all active savings goals."""
@@ -53,9 +54,85 @@ def get_locked_goals_amount(db: Session, user_id: str) -> Decimal:
     return total_monthly_locked
 
 def get_upcoming_fixed_expenses(db: Session, user_id: str) -> Decimal:
-    """Calculate upcoming fixed expenses. (Stubbed to 0.00 for Sprint 2)."""
-    # Will be implemented when the recurring_expenses table is added.
-    return Decimal('0.00')
+    """
+    Calculate unpaid upcoming fixed obligations for the current billing cycle.
+    Excludes commitments already settled in the current calendar month.
+    """
+    from app.services.commitment_service import get_commitments_with_status
+    commitments = get_commitments_with_status(db, user_id)
+    
+    unpaid_total = Decimal('0.00')
+    for c in commitments:
+        if c.get("status") == "active" and not c.get("is_paid_this_month"):
+            unpaid_total += Decimal(str(c.get("amount", 0)))
+            
+    return unpaid_total
+
+def get_financial_runway(db: Session, user_id: str) -> Dict[str, Any]:
+    """
+    Calculate user's Financial Runway (months of survival without income)
+    based on current total balance, fixed monthly obligations, and recent discretionary burn rate.
+    """
+    total_balance = get_total_balance(db, user_id)
+    
+    # 1. Total monthly active fixed commitments
+    active_commitments = db.query(FixedCommitment).filter(
+        FixedCommitment.user_id == user_id,
+        FixedCommitment.status == 'active'
+    ).all()
+    
+    monthly_fixed = Decimal('0.00')
+    for c in active_commitments:
+        if c.frequency == 'yearly':
+            monthly_fixed += c.amount / Decimal('12')
+        elif c.frequency == 'weekly':
+            monthly_fixed += c.amount * Decimal('4.33')
+        else:
+            monthly_fixed += c.amount
+
+    # 2. Average discretionary burn over past 90 days
+    ninety_days_ago = date.today() - timedelta(days=90)
+    recent_expenses = db.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == 'expense',
+        Transaction.date >= ninety_days_ago
+    ).scalar() or Decimal('0.00')
+    
+    # Monthly average of non-fixed spend
+    avg_total_monthly_spend = recent_expenses / Decimal('3.0')
+    avg_discretionary = max(Decimal('0.00'), avg_total_monthly_spend - monthly_fixed)
+    
+    monthly_burn = monthly_fixed + avg_discretionary
+    
+    if monthly_burn <= Decimal('0.00'):
+        if total_balance > Decimal('0.00'):
+            return {
+                "runway_months": 99.0,
+                "monthly_burn": Decimal('0.00'),
+                "runway_status": "healthy"
+            }
+        else:
+            return {
+                "runway_months": 0.0,
+                "monthly_burn": Decimal('0.00'),
+                "runway_status": "critical"
+            }
+            
+    runway_val = float(total_balance / monthly_burn)
+    runway_months = max(0.0, round(runway_val, 1))
+    
+    if runway_months >= 3.0:
+        status = "healthy"
+    elif runway_months >= 1.5:
+        status = "caution"
+    else:
+        status = "critical"
+        
+    return {
+        "runway_months": runway_months,
+        "monthly_burn": monthly_burn,
+        "runway_status": status
+    }
 
 def get_safe_to_spend(db: Session, user_id: str) -> Decimal:
     """Calculate Safe to Spend: Total Balance - Active Goals - Fixed Expenses."""
