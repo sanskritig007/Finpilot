@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../core/api';
 import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
@@ -10,9 +10,12 @@ import { CommitmentsList } from '../commitments/CommitmentsList';
 import { SettingsModal } from './SettingsModal';
 import { AddTransactionModal } from '../transactions/AddTransactionModal';
 import { AICoachCard } from './AICoachCard';
+import { NotificationCenter } from '../notifications/NotificationCenter';
+import { UpcomingBillBanner } from '../notifications/UpcomingBillBanner';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
+  const commitmentsSectionRef = useRef(null);
   const [summary, setSummary] = useState({
     total_balance: 0,
     active_goals_locked: 0,
@@ -72,6 +75,12 @@ export const DashboardView = () => {
     }
   };
 
+  const scrollToCommitments = () => {
+    if (commitmentsSectionRef.current) {
+      commitmentsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const safeToSpendVal = parseFloat(summary.safe_to_spend) || 0;
   const totalBalanceVal = parseFloat(summary.total_balance) || 0;
   const goalsLockedVal = parseFloat(summary.active_goals_locked) || 0;
@@ -108,9 +117,16 @@ export const DashboardView = () => {
               <Plus className="h-3.5 w-3.5" />
               <span>Upload CSV</span>
             </button>
+
+            {/* Apple Notification Bell */}
+            <NotificationCenter 
+              refreshTrigger={refreshTrigger} 
+              onUpdate={() => setRefreshTrigger(prev => prev + 1)} 
+            />
+
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="apple-press h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#86868b] hover:text-white border border-white/[0.06] flex items-center justify-center transition-colors ml-1"
+              className="apple-press h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#86868b] hover:text-white border border-white/[0.06] flex items-center justify-center transition-colors"
               title="Settings"
             >
               <Settings className="h-3.5 w-3.5" />
@@ -129,6 +145,12 @@ export const DashboardView = () => {
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-6 md:px-10 pt-8 space-y-8">
         
+        {/* Urgent Bill Radar Floating Banner */}
+        <UpcomingBillBanner 
+          refreshTrigger={refreshTrigger}
+          onScrollToCommitments={scrollToCommitments}
+        />
+
         {/* Sandbox Session Warning Banner */}
         {localStorage.getItem('finpilot_is_sandbox') === 'true' && (
           <div className="bg-[#1d1d1f] border border-blue-500/20 p-4 rounded-[16px] flex flex-wrap items-center justify-between gap-4 text-xs font-normal text-blue-300">
@@ -292,7 +314,7 @@ export const DashboardView = () => {
           <div className="lg:col-span-7">
             <TransactionList refreshTrigger={refreshTrigger} />
           </div>
-          <div className="lg:col-span-5 space-y-8">
+          <div className="lg:col-span-5 space-y-8" ref={commitmentsSectionRef}>
             <CommitmentsList 
               refreshTrigger={refreshTrigger} 
               onUpdate={() => setRefreshTrigger(prev => prev + 1)} 
