@@ -39,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.v1 import auth, transactions, dashboard, chat, goals, commitments
+from app.api.v1 import auth, transactions, dashboard, chat, goals, commitments, simulator
 
 @app.get("/health")
 def health_check():
@@ -51,3 +51,4 @@ app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboar
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(goals.router, prefix="/api/v1/goals", tags=["goals"])
 app.include_router(commitments.router, prefix="/api/v1/commitments", tags=["commitments"])
+app.include_router(simulator.router, prefix="/api/v1/simulator", tags=["simulator"])

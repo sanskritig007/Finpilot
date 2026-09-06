@@ -4,7 +4,7 @@ import { UploadModal } from '../transactions/UploadModal';
 import { TransactionList } from '../transactions/TransactionList';
 import { useAuth } from '../auth/AuthContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle, Zap, Calendar } from 'lucide-react';
+import { ShieldCheck, Lock, Edit3, Plus, LogOut, Settings, AlertTriangle, Zap, Calendar, Sliders } from 'lucide-react';
 import { GoalsList } from '../goals/GoalsList';
 import { CommitmentsList } from '../commitments/CommitmentsList';
 import { SettingsModal } from './SettingsModal';
@@ -12,6 +12,7 @@ import { AddTransactionModal } from '../transactions/AddTransactionModal';
 import { AICoachCard } from './AICoachCard';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { UpcomingBillBanner } from '../notifications/UpcomingBillBanner';
+import { WhatIfSimulatorModal } from '../simulator/WhatIfSimulatorModal';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -28,6 +29,7 @@ export const DashboardView = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [chatResetTrigger, setChatResetTrigger] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [openingBalance, setOpeningBalance] = useState('');
@@ -103,6 +105,16 @@ export const DashboardView = () => {
           </div>
           
           <div className="flex items-center gap-2.5">
+            {/* What-If Purchase Simulator Pill CTA */}
+            <button
+              onClick={() => setIsSimulatorOpen(true)}
+              className="apple-press bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.08] text-xs font-normal px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-none"
+              title="Stress test a planned purchase"
+            >
+              <Sliders className="h-3.5 w-3.5 text-[#2997ff]" />
+              <span>Simulator</span>
+            </button>
+
             <button
               onClick={() => setIsAddTransactionOpen(true)}
               className="apple-press bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.08] text-xs font-normal px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all"
@@ -327,6 +339,11 @@ export const DashboardView = () => {
         </div>
 
         {/* Modals & Dialogs */}
+        <WhatIfSimulatorModal
+          isOpen={isSimulatorOpen}
+          onClose={() => setIsSimulatorOpen(false)}
+        />
+
         <UploadModal
           isOpen={isUploadOpen}
           onClose={() => setIsUploadOpen(false)}
