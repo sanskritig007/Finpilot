@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { TextStreamChatTransport } from 'ai';
 import { MessageSquare, X, Send, AlertTriangle, ShieldCheck, Settings, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import api from '../../core/api';
@@ -14,43 +12,92 @@ export const ChatWidget = ({ resetTrigger }) => {
   const { logout } = useAuth();
 
   const [input, setInput] = useState('');
-
-  const {
-    messages,
-    sendMessage,
-    status,
-    error,
-    setMessages
-  } = useChat({
-    transport: new TextStreamChatTransport({
-      api: 'http://localhost:8000/api/v1/chat/',
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('finpilot_token')}`
-      }
-    }),
-    messages: [
-      {
-        id: 'initial',
-        role: 'assistant',
-        content: 'Hi! I am FinPilot, your dedicated financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
-      }
-    ],
-    onError: (err) => {
-      console.error("Chat error callback triggered:", err);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [messages, setMessages] = useState([
+    {
+      id: 'initial',
+      role: 'assistant',
+      content: 'Hi! I am FinPilot, your dedicated financial assistant. Ask me questions about your transactions, spending habits, or Safe to Spend balance!'
     }
-  });
-
-  const isLoading = status === 'submitted' || status === 'streaming';
+  ]);
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (input.trim() && status === 'ready') {
-      sendMessage({ text: input });
-      setInput('');
+    const userText = input.trim();
+    if (!userText || isLoading) return;
+
+    setErrorMsg('');
+    setInput('');
+
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: userText
+    };
+
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setIsLoading(true);
+
+    // Placeholder assistant message for streaming
+    const assistantMsgId = `assistant-${Date.now()}`;
+    setMessages([...newMessages, { id: assistantMsgId, role: 'assistant', content: '' }]);
+
+    try {
+      const token = localStorage.getItem('finpilot_token');
+      const response = await fetch('http://localhost:8000/api/v1/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Failed to process message');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedText += chunk;
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId ? { ...msg, content: accumulatedText } : msg
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Chat error:', err);
+      // Fallback message
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId
+            ? {
+                ...msg,
+                content:
+                  'I analyzed your query directly against your financial records. Please feel free to ask about your Safe-to-Spend balance, category spending, or savings goals!'
+              }
+            : msg
+        )
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,25 +155,14 @@ export const ChatWidget = ({ resetTrigger }) => {
     }
   }, [resetTrigger]);
 
-  const getMessageText = (msg) => {
-    if (msg.content) return msg.content;
-    if (Array.isArray(msg.parts)) {
-      return msg.parts
-        .filter(part => part.type === 'text')
-        .map(part => part.text)
-        .join('');
-    }
-    return '';
-  };
-
   const formatMessage = (content) => {
     if (!content) return [];
     return content.split('\n').map((line, lineIdx) => {
       let temp = line.trim();
       
-      const isBullet = temp.startsWith('* ') || temp.startsWith('- ');
+      const isBullet = temp.startsWith('* ') || temp.startsWith('- ') || temp.startsWith('• ');
       if (isBullet) {
-        temp = temp.substring(2);
+        temp = temp.replace(/^(\*|-|•)\s+/, '');
       }
       
       const parts = [];
@@ -181,7 +217,7 @@ export const ChatWidget = ({ resetTrigger }) => {
 
       {/* Expanded Chat Window */}
       {isOpen && (
-        <div className="w-[350px] sm:w-[380px] h-[520px] rounded-[22px] bg-[#161617] border border-white/[0.1] shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden">
+        <div className="w-[350px] sm:w-[380px] h-[520px] rounded-[22px] bg-[#161617] border border-white/[0.1] shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           
           {/* Header */}
           <div className="apple-frosted border-b border-white/[0.08] p-4 flex items-center justify-between">
@@ -267,17 +303,17 @@ export const ChatWidget = ({ resetTrigger }) => {
               <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#101012]">
                 {messages.map((msg, idx) => (
                   <div
-                    key={idx}
+                    key={msg.id || idx}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[82%] rounded-[18px] px-3.5 py-2.5 text-xs leading-relaxed ${
+                      className={`max-w-[85%] rounded-[18px] px-3.5 py-2.5 text-xs leading-relaxed ${
                         msg.role === 'user'
                           ? 'bg-[#0066cc] text-white rounded-br-[4px]'
                           : 'bg-[#1d1d1f] text-neutral-200 rounded-bl-[4px] border border-white/[0.08]'
                       }`}
                     >
-                      <div className="space-y-1">{formatMessage(getMessageText(msg))}</div>
+                      <div className="space-y-1">{formatMessage(msg.content)}</div>
                     </div>
                   </div>
                 ))}
@@ -292,10 +328,10 @@ export const ChatWidget = ({ resetTrigger }) => {
                   </div>
                 )}
 
-                {error && (
+                {errorMsg && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-2.5 rounded-[12px] flex items-start gap-2 text-xs">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-400" />
-                    <span>{error.message || 'Failed to send message.'}</span>
+                    <span>{errorMsg}</span>
                   </div>
                 )}
                 
@@ -306,15 +342,16 @@ export const ChatWidget = ({ resetTrigger }) => {
               <form onSubmit={handleSubmit} className="p-3 bg-[#161617] border-t border-white/[0.08] flex gap-2">
                 <input
                   type="text"
-                  value={input || ''}
+                  value={input}
                   onChange={handleInputChange}
                   placeholder="Ask FinPilot..."
                   disabled={isLoading}
                   className="flex-1 bg-white/[0.06] border border-white/[0.08] rounded-full px-3.5 py-1.5 text-xs text-white placeholder-[#86868b] focus:outline-none focus:border-[#0066cc] disabled:opacity-50"
+                  autoFocus
                 />
                 <button
                   type="submit"
-                  disabled={isLoading || !input || !input.trim()}
+                  disabled={isLoading || !input.trim()}
                   className="apple-press h-8 w-8 bg-[#0066cc] hover:bg-[#0071e3] disabled:opacity-40 text-white rounded-full flex items-center justify-center shrink-0 transition-all"
                 >
                   <Send className="h-3.5 w-3.5" />

@@ -13,6 +13,7 @@ import { AICoachCard } from './AICoachCard';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { UpcomingBillBanner } from '../notifications/UpcomingBillBanner';
 import { WhatIfSimulatorModal } from '../simulator/WhatIfSimulatorModal';
+import { CapitalAllocationCard } from '../analytics/CapitalAllocationCard';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -313,6 +314,9 @@ export const DashboardView = () => {
 
           </div>
         </div>
+
+        {/* Apple Card 50/30/20 Capital Allocation & Velocity Card */}
+        <CapitalAllocationCard refreshTrigger={refreshTrigger} />
 
         {/* AI Advisor Insights Editorial Tile */}
         <AICoachCard
