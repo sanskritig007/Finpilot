@@ -182,21 +182,27 @@ FinPilot adheres strictly to Apple's modern web aesthetic:
 * `PUT /{id}` — Deposit/withdraw capital into goal vault.
 * `DELETE /{id}` — Cancel/remove vault.
 
+### What-If Simulator (`/api/v1/simulator`)
+* `POST /evaluate` — Stress-test prospective one-time or EMI purchases against runway and active goals.
+
+### Multi-Account & Net Worth (`/api/v1/accounts`)
+* `GET /` — List connected accounts (checking, savings, investments, credit cards, loans).
+* `POST /` — Provision a new account with custom balance or credit limit.
+* `GET /summary` — Retrieve real-time Net Worth breakdown and credit card utilization.
+* `PUT /{id}` — Update account balances, credit limits, or primary flags.
+* `DELETE /{id}` — Remove connected account.
+
 ---
 
-## 🚀 Quick Start
+## ⚡ Getting Started
+
 
 ### Prerequisites
 * **Docker Desktop** (running)
 * **Python 3.9+**
 * **Node.js 18+**
 
-### 1. Clone & Configure Environment
-```bash
-git clone https://github.com/sanskritig007/Finpilot.git
-cd Finpilot
-```
-
+### 1. Configure Environment
 Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finpilot
@@ -242,11 +248,21 @@ PYTHONPATH=. ./venv/bin/python -m unittest discover tests
 
 #### Test Matrix Coverage
 ```text
+test_accounts.py
+  ├── test_default_account_auto_provisioning       [PASSED]
+  ├── test_create_and_primary_toggle              [PASSED]
+  ├── test_deterministic_net_worth_calculation    [PASSED]
+  ├── test_credit_card_utilization_thresholds     [PASSED]
+  └── test_account_update_and_delete              [PASSED]
 test_commitments.py
   ├── test_recurring_detection_algorithm           [PASSED]
   ├── test_upcoming_fixed_expenses_and_safe_to_spend [PASSED]
   ├── test_paid_commitment_deduction_in_cycle     [PASSED]
   └── test_financial_runway_calculation            [PASSED]
+test_simulator.py
+  ├── test_simulator_affordable_scenario          [PASSED]
+  ├── test_simulator_unaffordable_scenario        [PASSED]
+  └── test_simulator_emi_scenario                 [PASSED]
 test_manual_transactions.py
   ├── test_create_manual_expense                   [PASSED]
   ├── test_create_manual_income                    [PASSED]
@@ -257,7 +273,7 @@ test_csv_mapping.py                                [PASSED]
 test_insights.py                                   [PASSED]
 test_sandbox.py                                    [PASSED]
 
-Ran 16 tests in 0.334s — OK (100% Passing)
+Ran 27 tests in 0.386s — OK (100% Passing)
 ```
 
 ### Run Frontend Production Build
@@ -276,8 +292,8 @@ npm run build
 - [x] **Phase 4: Apple Design Language Revamp** (Studio cards, frosted sub-nav, negative typography tracking).
 - [x] **Phase 5: Fixed Commitments & Runway Engine** (Recurring bill auto-detector, runway modeling, Safe-to-Spend reservation).
 - [x] **Phase 6: In-App Notification Center & Bill Radar** (Upcoming bill radar banner, frosted popover, quick settlement).
-- [ ] **Phase 7: "Can I Afford This?" What-If Simulator** (Cash flow stress testing, goal delay forecasting, EMI analysis).
-- [ ] **Phase 8: Multi-Account & Net Worth Aggregator** (Bank accounts, investments, and credit card liability manager).
+- [x] **Phase 7: "Can I Afford This?" What-If Simulator** (Cash flow stress testing, goal delay forecasting, EMI analysis).
+- [x] **Phase 8: Multi-Account & Net Worth Aggregator** (Bank accounts, investments, and credit card liability manager).
 
 ---
 

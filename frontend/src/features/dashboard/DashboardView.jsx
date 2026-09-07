@@ -14,6 +14,9 @@ import { NotificationCenter } from '../notifications/NotificationCenter';
 import { UpcomingBillBanner } from '../notifications/UpcomingBillBanner';
 import { WhatIfSimulatorModal } from '../simulator/WhatIfSimulatorModal';
 import { CapitalAllocationCard } from '../analytics/CapitalAllocationCard';
+import { NetWorthCard } from '../accounts/NetWorthCard';
+import { AccountsManagerModal } from '../accounts/AccountsManagerModal';
+import { Landmark } from 'lucide-react';
 
 export const DashboardView = () => {
   const { logout } = useAuth();
@@ -31,8 +34,10 @@ export const DashboardView = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [isAccountsOpen, setIsAccountsOpen] = useState(false);
   const [chatResetTrigger, setChatResetTrigger] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const [openingBalance, setOpeningBalance] = useState('');
   const [showBalanceForm, setShowBalanceForm] = useState(false);
   const [insights, setInsights] = useState(null);
@@ -106,6 +111,16 @@ export const DashboardView = () => {
           </div>
           
           <div className="flex items-center gap-2.5">
+            {/* Multi-Account & Net Worth Aggregator Button */}
+            <button
+              onClick={() => setIsAccountsOpen(true)}
+              className="apple-press bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.08] text-xs font-normal px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-none"
+              title="Manage Connected Bank Accounts, Portfolios & Credit Cards"
+            >
+              <Landmark className="h-3.5 w-3.5 text-[#30d158]" />
+              <span>Accounts</span>
+            </button>
+
             {/* What-If Purchase Simulator Pill CTA */}
             <button
               onClick={() => setIsSimulatorOpen(true)}
@@ -115,6 +130,7 @@ export const DashboardView = () => {
               <Sliders className="h-3.5 w-3.5 text-[#2997ff]" />
               <span>Simulator</span>
             </button>
+
 
             <button
               onClick={() => setIsAddTransactionOpen(true)}
@@ -315,6 +331,12 @@ export const DashboardView = () => {
           </div>
         </div>
 
+        {/* Consolidated Net Worth & Multi-Account Aggregator Tile */}
+        <NetWorthCard 
+          refreshTrigger={refreshTrigger} 
+          onOpenManager={() => setIsAccountsOpen(true)} 
+        />
+
         {/* Apple Card 50/30/20 Capital Allocation & Velocity Card */}
         <CapitalAllocationCard refreshTrigger={refreshTrigger} />
 
@@ -343,10 +365,17 @@ export const DashboardView = () => {
         </div>
 
         {/* Modals & Dialogs */}
+        <AccountsManagerModal
+          isOpen={isAccountsOpen}
+          onClose={() => setIsAccountsOpen(false)}
+          onUpdate={() => setRefreshTrigger(prev => prev + 1)}
+        />
+
         <WhatIfSimulatorModal
           isOpen={isSimulatorOpen}
           onClose={() => setIsSimulatorOpen(false)}
         />
+
 
         <UploadModal
           isOpen={isUploadOpen}
