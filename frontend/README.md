@@ -139,3 +139,5 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 
 ## 📄 License
 FinPilot Frontend is open-source software released under the **MIT License**.
+
+<!-- Updated for deployment & commit sync -->
