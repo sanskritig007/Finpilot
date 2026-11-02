@@ -1,9 +1,8 @@
-# pyrefly: ignore [missing-import]
+import uuid
 from sqlalchemy.orm import Session
-# pyrefly: ignore [missing-import]
 from sqlalchemy import func
 from decimal import Decimal
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from app.models.user import User
 from app.models.account import Account
 from app.models.transaction import Transaction
@@ -11,11 +10,20 @@ from app.models.goal import Goal
 from app.models.fixed_commitment import FixedCommitment
 from app.services import finance_logic
 
-def get_safe_to_spend_balance(db: Session, user_id: str) -> Dict[str, Any]:
+def _safe_user_id(user_id: Any) -> Any:
+    if isinstance(user_id, str):
+        try:
+            return uuid.UUID(user_id)
+        except Exception:
+            pass
+    return user_id
+
+def get_safe_to_spend_balance(db: Session, user_id: Any) -> Dict[str, Any]:
     """Retrieve the exact Safe to Spend balance and Total balance."""
-    total_balance = finance_logic.get_total_balance(db, user_id)
-    safe_to_spend = finance_logic.get_safe_to_spend(db, user_id)
-    goals_locked = finance_logic.get_locked_goals_amount(db, user_id)
+    uid = _safe_user_id(user_id)
+    total_balance = finance_logic.get_total_balance(db, uid)
+    safe_to_spend = finance_logic.get_safe_to_spend(db, uid)
+    goals_locked = finance_logic.get_locked_goals_amount(db, uid)
     
     return {
         "total_balance": float(total_balance),
@@ -23,18 +31,17 @@ def get_safe_to_spend_balance(db: Session, user_id: str) -> Dict[str, Any]:
         "goals_locked": float(goals_locked)
     }
 
-def get_spending_by_category(db: Session, user_id: str, category_name: str) -> Dict[str, Any]:
+def get_spending_by_category(db: Session, user_id: Any, category_name: str) -> Dict[str, Any]:
     """Retrieve total amount spent by user in a specific category (case-insensitive substring match)."""
-    # Sum up all expense transactions matching the category
+    uid = _safe_user_id(user_id)
     total = db.query(func.sum(Transaction.amount))\
-        .filter(Transaction.user_id == user_id)\
+        .filter(Transaction.user_id == uid)\
         .filter(Transaction.type == 'expense')\
         .filter(func.lower(Transaction.category).like(f"%{category_name.lower()}%"))\
         .scalar() or Decimal('0.00')
         
-    # Get recent 5 transactions in this category for detail
     recent = db.query(Transaction)\
-        .filter(Transaction.user_id == user_id)\
+        .filter(Transaction.user_id == uid)\
         .filter(Transaction.type == 'expense')\
         .filter(func.lower(Transaction.category).like(f"%{category_name.lower()}%"))\
         .order_by(Transaction.date.desc())\
@@ -49,16 +56,17 @@ def get_spending_by_category(db: Session, user_id: str, category_name: str) -> D
         ]
     }
 
-def get_spending_by_description(db: Session, user_id: str, query: str) -> Dict[str, Any]:
+def get_spending_by_description(db: Session, user_id: Any, query: str) -> Dict[str, Any]:
     """Search transactions by keyword in their description (e.g. 'Swiggy', 'Zomato')."""
+    uid = _safe_user_id(user_id)
     total = db.query(func.sum(Transaction.amount))\
-        .filter(Transaction.user_id == user_id)\
+        .filter(Transaction.user_id == uid)\
         .filter(Transaction.type == 'expense')\
         .filter(func.lower(Transaction.description).like(f"%{query.lower()}%"))\
         .scalar() or Decimal('0.00')
         
     recent = db.query(Transaction)\
-        .filter(Transaction.user_id == user_id)\
+        .filter(Transaction.user_id == uid)\
         .filter(Transaction.type == 'expense')\
         .filter(func.lower(Transaction.description).like(f"%{query.lower()}%"))\
         .order_by(Transaction.date.desc())\
@@ -73,9 +81,10 @@ def get_spending_by_description(db: Session, user_id: str, query: str) -> Dict[s
         ]
     }
 
-def get_savings_goals(db: Session, user_id: str) -> Dict[str, Any]:
+def get_savings_goals(db: Session, user_id: Any) -> Dict[str, Any]:
     """Retrieve list of user savings goals."""
-    goals = db.query(Goal).filter(Goal.user_id == user_id).all()
+    uid = _safe_user_id(user_id)
+    goals = db.query(Goal).filter(Goal.user_id == uid).all()
     return {
         "goals": [
             {
@@ -89,9 +98,10 @@ def get_savings_goals(db: Session, user_id: str) -> Dict[str, Any]:
         ]
     }
 
-def get_fixed_commitments_and_emis(db: Session, user_id: str) -> Dict[str, Any]:
+def get_fixed_commitments_and_emis(db: Session, user_id: Any) -> Dict[str, Any]:
     """Retrieve list of user recurring fixed bills, commitments, subscriptions, and EMIs."""
-    commitments = db.query(FixedCommitment).filter(FixedCommitment.user_id == user_id).all()
+    uid = _safe_user_id(user_id)
+    commitments = db.query(FixedCommitment).filter(FixedCommitment.user_id == uid).all()
     total_monthly = sum(float(c.amount) for c in commitments if c.status == 'active')
     return {
         "total_monthly_commitments": total_monthly,

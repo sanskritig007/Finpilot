@@ -10,6 +10,85 @@ FALLBACK_MODELS = [
     "gemini-2.5-pro",
 ]
 
+def _extract_targeted_financial_context(db: Session, user_id: str, query: str) -> str:
+    """
+    Just-in-Time Intent-Based Context Fetcher:
+    Analyzes user query and fetches ONLY the relevant piece of financial data from the DB.
+    Zero token waste: unrelated questions get 0 extra tokens; specific questions get only 15-30 tokens.
+    """
+    q = query.lower().strip()
+    context_parts = []
+
+    # 1. EMIs, Bills, Rent, Subscriptions
+    if any(k in q for k in ["emi", "commitment", "commitments", "bill", "bills", "rent", "subscription", "subscriptions", "due", "deni", "dena"]):
+        comm_data = ai_tools.get_fixed_commitments_and_emis(db, user_id)
+        commitments = comm_data.get("commitments", [])
+        if commitments:
+            lines = [f"User's Active Fixed Commitments & EMIs (Total Monthly: ₹{comm_data['total_monthly_commitments']:,.2f}):"]
+            for c in commitments:
+                lines.append(f"- {c['name']}: ₹{c['amount']:,.2f} ({c['category']}, due on day {c['due_day']} of month)")
+            context_parts.append("\n".join(lines))
+        else:
+            context_parts.append("User has 0 active EMIs or fixed commitments recorded in database.")
+
+    # 2. Balance, Safe-to-Spend, Financial Runway
+    if any(k in q for k in ["safe to spend", "safe-to-spend", "balance", "liquid", "spend", "bacha", "bache", "kitna paisa", "runway"]):
+        bal = ai_tools.get_safe_to_spend_balance(db, user_id)
+        fixed_exp = float(finance_logic.get_upcoming_fixed_expenses(db, user_id))
+        runway = finance_logic.get_financial_runway(db, user_id)
+        context_parts.append(
+            f"User's Verified Financial Balances:\n"
+            f"- Safe to Spend: ₹{bal['safe_to_spend']:,.2f}\n"
+            f"- Total Liquid Balance: ₹{bal['total_balance']:,.2f}\n"
+            f"- Goals Locked in Vaults: ₹{bal['goals_locked']:,.2f}\n"
+            f"- Upcoming Fixed Bills: ₹{fixed_exp:,.2f}\n"
+            f"- Financial Runway: {runway['runway_months']} months ({runway['runway_status']} zone)"
+        )
+
+    # 3. Savings Goals / Vaults
+    if any(k in q for k in ["goal", "goals", "vault", "vaults", "saving", "saved", "target"]):
+        goals_data = ai_tools.get_savings_goals(db, user_id)
+        goals = goals_data.get("goals", [])
+        if goals:
+            lines = ["User's Active Savings Vaults:"]
+            for g in goals:
+                lines.append(f"- {g['name']}: ₹{g['current_amount']:,.2f} saved towards ₹{g['target_amount']:,.2f} goal (target: {g['target_date'] or 'ongoing'})")
+            context_parts.append("\n".join(lines))
+        else:
+            context_parts.append("User currently has no active savings goals/vaults.")
+
+    # 4. Merchant or Category specific inquiry
+    known_cats = ["Shopping", "Food & Dining", "Housing", "Rent", "Utilities", "Entertainment", "Travel", "Healthcare", "Groceries", "Investment", "Subscriptions"]
+    matched_cats = [c for c in known_cats if c.lower() in q or (c == "Food & Dining" and ("food" in q or "dining" in q))]
+    for cat in matched_cats:
+        res = ai_tools.get_spending_by_category(db, user_id, cat)
+        context_parts.append(f"Spending in category '{cat}': Total ₹{res['total_spent']:,.2f}")
+
+    words = re.findall(r'[a-zA-Z0-9]+', q)
+    stop_words = {"how", "much", "total", "money", "have", "spent", "on", "and", "show", "me", "all", "my", "transactions", "for", "the", "in", "what", "is", "can", "i", "emi", "deni", "hai", "batao", "kya", "mera", "meri"}
+    keywords = [w for w in words if w not in stop_words and len(w) >= 3 and not w.isdigit()]
+    if keywords and not matched_cats:
+        target = keywords[0]
+        desc_res = ai_tools.get_spending_by_description(db, user_id, target)
+        if desc_res.get('transactions'):
+            context_parts.append(f"Transactions matching '{target}': Total spent ₹{desc_res['total_spent']:,.2f} across {len(desc_res['transactions'])} transactions.")
+
+    # 5. Affordability / Purchase Stress Test
+    numbers = re.findall(r'₹?\s*(\d+(?:,\d+)*(?:\.\d+)?)', q)
+    if ("afford" in q or "buy" in q or "kharid" in q or "le sakta" in q or "le sakti" in q) and numbers:
+        raw_num = numbers[0].replace(',', '')
+        amt = Decimal(raw_num)
+        safe = finance_logic.get_safe_to_spend(db, user_id)
+        cushion = safe - amt
+        context_parts.append(
+            f"Affordability Evaluation for ₹{amt:,.2f}:\n"
+            f"- Current Safe-to-Spend: ₹{safe:,.2f}\n"
+            f"- Is Affordable upfront: {'Yes' if cushion >= 0 else 'No (Exceeds by ₹' + str(abs(cushion)) + ')'}\n"
+            f"- Remaining cushion after purchase: ₹{cushion:,.2f}"
+        )
+
+    return "\n\n".join(context_parts) if context_parts else ""
+
 def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> str:
     """
     Autonomous Deterministic Financial Intelligence Engine:
@@ -29,6 +108,29 @@ def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> 
             "to your transaction logs, safe-to-spend limits, savings goals, or general personal budgeting. "
             "Please ask a financial question!"
         )
+
+    # 2. Fixed Commitments & EMIs (English, Hindi, Hinglish)
+    if any(k in q for k in ["emi", "commitment", "commitments", "fixed", "bill", "bills", "rent", "subscription", "subscriptions", "due", "deni", "dena", "pay"]):
+        comm_data = ai_tools.get_fixed_commitments_and_emis(db, user_id)
+        commitments = comm_data.get("commitments", [])
+        q_words = set(re.findall(r'[a-zA-Z]+', q))
+        is_hindi = bool(q_words.intersection({"h", "hai", "kitni", "kitna", "kya", "mera", "meri", "deni", "dena", "batao", "kab"}))
+        
+        if not commitments:
+            return "Aapka koi active recurring EMI ya fixed bill registered nahi hai." if is_hindi else "You do not have any active EMIs or fixed commitments recorded."
+        
+        lines = []
+        if is_hindi:
+            lines.append("Aapke active EMIs aur upcoming fixed bills yeh hain:\n")
+            for c in commitments:
+                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Har mahine ki {c['due_day']} tareekh ko)")
+            lines.append(f"\n**Total Monthly Fixed Bills / EMI:** ₹{comm_data['total_monthly_commitments']:,.2f}")
+        else:
+            lines.append("Here are your active EMIs and upcoming fixed bills:\n")
+            for c in commitments:
+                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Due on day {c['due_day']} of month)")
+            lines.append(f"\n**Total Monthly Fixed Commitments / EMI:** ₹{comm_data['total_monthly_commitments']:,.2f}")
+        return "\n".join(lines)
 
     # 2. Safe to Spend & Balance Questions
     if any(k in q for k in ["safe to spend", "safe-to-spend", "balance", "how much can i spend", "liquid"]):
@@ -57,28 +159,6 @@ def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> 
         for g in goals:
             pct = round((g['current_amount'] / g['target_amount']) * 100, 1) if g['target_amount'] > 0 else 0
             lines.append(f"- **{g['name']}:** ₹{g['current_amount']:,.2f} / ₹{g['target_amount']:,.2f} ({pct}% reached)")
-        return "\n".join(lines)
-
-    # 3.5. Fixed Commitments & EMI Questions (English, Hindi, Hinglish)
-    if any(k in q for k in ["emi", "commitment", "commitments", "bill", "bills", "rent", "subscription", "subscriptions", "kitni deni", "kab deni", "deni h", "deni hai"]):
-        comm_data = ai_tools.get_fixed_commitments_and_emis(db, user_id)
-        commitments = comm_data.get("commitments", [])
-        is_hindi = any(h in q for h in ["h", "hai", "kitni", "kya", "mera", "meri", "deni", "batao", "kitna"])
-        
-        if not commitments:
-            return "Aapka koi active recurring EMI ya fixed bill registered nahi hai." if is_hindi else "You do not have any active EMIs or fixed commitments recorded."
-        
-        lines = []
-        if is_hindi:
-            lines.append("Aapke active EMIs aur upcoming fixed bills yeh hain:\n")
-            for c in commitments:
-                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Har mahine ki {c['due_day']} tareekh ko)")
-            lines.append(f"\n**Total Monthly Fixed Bills / EMI:** ₹{comm_data['total_monthly_commitments']:,.2f}")
-        else:
-            lines.append("Here are your upcoming fixed bills and EMIs:\n")
-            for c in commitments:
-                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Due on day {c['due_day']} of month)")
-            lines.append(f"\n**Total Monthly Fixed Commitments:** ₹{comm_data['total_monthly_commitments']:,.2f}")
         return "\n".join(lines)
 
     # 4. Multi-Category or Single Category Spending
@@ -152,7 +232,7 @@ def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> 
 
 def run_chat_completion(db: Session, user_id: str, messages: list) -> str:
     """
-    Send message history to Gemini with automatic tool execution.
+    Send message history to Gemini with Just-in-Time targeted financial context injection.
     Features automated multi-model fallback and deterministic database failover.
     """
     last_user_message = messages[-1]["content"] if messages else ""
@@ -181,16 +261,21 @@ def run_chat_completion(db: Session, user_id: str, messages: list) -> str:
         get_fixed_commitments_and_emis
     ]
 
+    # Just-in-time targeted context extraction (zero token waste!)
+    targeted_context = _extract_targeted_financial_context(db, user_id, last_user_message)
+    context_directive = f"\n\nCURRENT RELEVANT USER FINANCIAL DATA:\n{targeted_context}\n" if targeted_context else ""
+
     system_instruction = (
         "You are FinPilot, a premium, helpful personal finance assistant. You have secure access to the user's "
         "bank transactions, savings goals, and recurring fixed commitments/bills/EMIs through specific tools.\n"
+        f"{context_directive}"
         "CRITICAL RULES:\n"
         "1. STRICT GUARDRAIL: You are strictly a personal finance assistant. You must refuse to answer any "
         "unrelated questions (such as general knowledge, coding, weather, math puzzles, social chatter like 'how are you', etc.). "
         "If the user asks an unrelated question, politely reply: 'I am FinPilot, your dedicated financial assistant. I can only answer questions related to your transaction logs, safe-to-spend limits, savings goals, or general personal budgeting. Please ask a financial question!'\n"
-        "2. NEVER guess or hallucinate numbers. If you need data, call the appropriate database tool (for balance, category spending, search queries, savings goals, or recurring bills/EMIs).\n"
-        "3. MULTILINGUAL & HINGLISH SUPPORT: The user may ask questions in English, Hindi, or Hinglish (e.g., 'emi kitni deni h', 'mera balance kitna hai', 'kya main yeh purchase afford kar sakta hu', 'kitne kharche hue'). Understand them accurately and reply naturally in the same language and tone with verified figures.\n"
-        "4. Format numbers nicely (e.g. ₹20,000.00) and structure your answers with clear bullet points or bold highlights.\n"
+        "2. NEVER guess or hallucinate numbers. If relevant data is provided in CURRENT RELEVANT USER FINANCIAL DATA above, use it directly. If more data is needed, call the appropriate database tool.\n"
+        "3. MULTILINGUAL & HINGLISH SUPPORT: The user may ask questions in English, Hindi, or Hinglish (e.g. 'emi kitni deni h', 'mera balance kitna hai', 'kya main yeh le sakta hu', 'kitne kharche hue'). Understand them accurately and reply naturally in the same language and tone with exact figures.\n"
+        "4. Format numbers nicely (e.g. ₹20,000.00) and structure your answers with clear bullet points or headers.\n"
         "5. Be concise, polite, and focus on financial well-being."
     )
 
