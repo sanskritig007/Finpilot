@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.models.goal import Goal
+from app.models.fixed_commitment import FixedCommitment
 from app.services import finance_logic
 
 def get_safe_to_spend_balance(db: Session, user_id: str) -> Dict[str, Any]:
@@ -85,5 +86,24 @@ def get_savings_goals(db: Session, user_id: str) -> Dict[str, Any]:
                 "status": goal.status
             }
             for goal in goals
+        ]
+    }
+
+def get_fixed_commitments_and_emis(db: Session, user_id: str) -> Dict[str, Any]:
+    """Retrieve list of user recurring fixed bills, commitments, subscriptions, and EMIs."""
+    commitments = db.query(FixedCommitment).filter(FixedCommitment.user_id == user_id).all()
+    total_monthly = sum(float(c.amount) for c in commitments if c.status == 'active')
+    return {
+        "total_monthly_commitments": total_monthly,
+        "commitments": [
+            {
+                "name": c.name,
+                "amount": float(c.amount),
+                "due_day": c.due_day,
+                "category": c.category,
+                "frequency": c.frequency,
+                "status": c.status
+            }
+            for c in commitments
         ]
     }

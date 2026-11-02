@@ -7,9 +7,7 @@ from app.services import ai_tools, finance_logic
 
 FALLBACK_MODELS = [
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.5-pro",
 ]
 
 def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> str:
@@ -59,6 +57,28 @@ def _local_deterministic_finance_chat(db: Session, user_id: str, query: str) -> 
         for g in goals:
             pct = round((g['current_amount'] / g['target_amount']) * 100, 1) if g['target_amount'] > 0 else 0
             lines.append(f"- **{g['name']}:** ₹{g['current_amount']:,.2f} / ₹{g['target_amount']:,.2f} ({pct}% reached)")
+        return "\n".join(lines)
+
+    # 3.5. Fixed Commitments & EMI Questions (English, Hindi, Hinglish)
+    if any(k in q for k in ["emi", "commitment", "commitments", "bill", "bills", "rent", "subscription", "subscriptions", "kitni deni", "kab deni", "deni h", "deni hai"]):
+        comm_data = ai_tools.get_fixed_commitments_and_emis(db, user_id)
+        commitments = comm_data.get("commitments", [])
+        is_hindi = any(h in q for h in ["h", "hai", "kitni", "kya", "mera", "meri", "deni", "batao", "kitna"])
+        
+        if not commitments:
+            return "Aapka koi active recurring EMI ya fixed bill registered nahi hai." if is_hindi else "You do not have any active EMIs or fixed commitments recorded."
+        
+        lines = []
+        if is_hindi:
+            lines.append("Aapke active EMIs aur upcoming fixed bills yeh hain:\n")
+            for c in commitments:
+                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Har mahine ki {c['due_day']} tareekh ko)")
+            lines.append(f"\n**Total Monthly Fixed Bills / EMI:** ₹{comm_data['total_monthly_commitments']:,.2f}")
+        else:
+            lines.append("Here are your upcoming fixed bills and EMIs:\n")
+            for c in commitments:
+                lines.append(f"- **{c['name']}:** ₹{c['amount']:,.2f} ({c['category']}, Due on day {c['due_day']} of month)")
+            lines.append(f"\n**Total Monthly Fixed Commitments:** ₹{comm_data['total_monthly_commitments']:,.2f}")
         return "\n".join(lines)
 
     # 4. Multi-Category or Single Category Spending
@@ -150,23 +170,28 @@ def run_chat_completion(db: Session, user_id: str, messages: list) -> str:
     def get_savings_goals() -> dict:
         return ai_tools.get_savings_goals(db, user_id)
 
+    def get_fixed_commitments_and_emis() -> dict:
+        return ai_tools.get_fixed_commitments_and_emis(db, user_id)
+
     tools_list = [
         get_safe_to_spend_balance,
         get_spending_by_category,
         get_spending_by_description,
-        get_savings_goals
+        get_savings_goals,
+        get_fixed_commitments_and_emis
     ]
 
     system_instruction = (
         "You are FinPilot, a premium, helpful personal finance assistant. You have secure access to the user's "
-        "bank transactions and savings goals through specific tools. "
+        "bank transactions, savings goals, and recurring fixed commitments/bills/EMIs through specific tools.\n"
         "CRITICAL RULES:\n"
         "1. STRICT GUARDRAIL: You are strictly a personal finance assistant. You must refuse to answer any "
         "unrelated questions (such as general knowledge, coding, weather, math puzzles, social chatter like 'how are you', etc.). "
         "If the user asks an unrelated question, politely reply: 'I am FinPilot, your dedicated financial assistant. I can only answer questions related to your transaction logs, safe-to-spend limits, savings goals, or general personal budgeting. Please ask a financial question!'\n"
-        "2. NEVER guess or hallucinate numbers. If you need data, call the appropriate database tool.\n"
-        "3. Format numbers nicely (e.g. ₹45,500.00) and structure your answers with clear bullet points or headers.\n"
-        "4. Be concise, polite, and focus on financial well-being."
+        "2. NEVER guess or hallucinate numbers. If you need data, call the appropriate database tool (for balance, category spending, search queries, savings goals, or recurring bills/EMIs).\n"
+        "3. MULTILINGUAL & HINGLISH SUPPORT: The user may ask questions in English, Hindi, or Hinglish (e.g., 'emi kitni deni h', 'mera balance kitna hai', 'kya main yeh purchase afford kar sakta hu', 'kitne kharche hue'). Understand them accurately and reply naturally in the same language and tone with verified figures.\n"
+        "4. Format numbers nicely (e.g. ₹20,000.00) and structure your answers with clear bullet points or bold highlights.\n"
+        "5. Be concise, polite, and focus on financial well-being."
     )
 
     if settings.GEMINI_API_KEY:
