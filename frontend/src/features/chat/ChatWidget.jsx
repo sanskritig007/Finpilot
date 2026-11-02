@@ -50,7 +50,8 @@ export const ChatWidget = ({ resetTrigger }) => {
 
     try {
       const token = localStorage.getItem('finpilot_token');
-      const response = await fetch('http://localhost:8000/api/v1/chat/', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const response = await fetch(`${apiBase}/chat/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

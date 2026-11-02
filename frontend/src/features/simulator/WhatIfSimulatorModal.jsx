@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { X, Sparkles, ShieldCheck, AlertTriangle, AlertCircle, ArrowRight, Zap, CheckCircle2, Sliders } from 'lucide-react';
 import api from '../../core/api';
 
+const formatCurrencyDisplay = (val) => {
+  const num = parseFloat(val);
+  if (isNaN(num)) return '₹0';
+  if (Math.abs(num) >= 10000000) {
+    return `₹${(num / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr`;
+  }
+  if (Math.abs(num) >= 1000000) {
+    return `₹${(num / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 })} L`;
+  }
+  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+};
+
 export const WhatIfSimulatorModal = ({ isOpen, onClose }) => {
   const [name, setName] = useState('New Purchase');
   const [amount, setAmount] = useState(25000);
@@ -213,24 +225,30 @@ export const WhatIfSimulatorModal = ({ isOpen, onClose }) => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               
               {/* Safe to Spend Delta */}
-              <div className="rounded-[16px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-1.5">
+              <div className="rounded-[16px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-1.5 overflow-hidden">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#86868b]">
                   Safe To Spend
                 </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-[#86868b] line-through">
-                    ₹{parseFloat(result.safe_to_spend.before).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                  <span 
+                    className="text-xs text-[#86868b] line-through truncate max-w-[45%]"
+                    title={`₹${parseFloat(result.safe_to_spend.before).toLocaleString('en-IN')}`}
+                  >
+                    {formatCurrencyDisplay(result.safe_to_spend.before)}
                   </span>
-                  <span className="text-xs text-[#86868b]">→</span>
-                  <span className={`text-base font-semibold ${
-                    parseFloat(result.safe_to_spend.after) < 0 ? 'text-rose-400' : 'text-white'
-                  }`}>
-                    ₹{parseFloat(result.safe_to_spend.after).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  <span className="text-xs text-[#86868b] shrink-0">→</span>
+                  <span 
+                    className={`text-sm sm:text-base font-semibold truncate max-w-[45%] ${
+                      parseFloat(result.safe_to_spend.after) < 0 ? 'text-rose-400' : 'text-white'
+                    }`}
+                    title={`₹${parseFloat(result.safe_to_spend.after).toLocaleString('en-IN')}`}
+                  >
+                    {formatCurrencyDisplay(result.safe_to_spend.after)}
                   </span>
                 </div>
-                <span className="text-[10px] text-rose-400/90 block">
+                <span className="text-[10px] text-rose-400/90 block truncate">
                   {parseFloat(result.safe_to_spend.delta) < 0 ? '' : '+'}
-                  ₹{parseFloat(result.safe_to_spend.delta).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  {formatCurrencyDisplay(result.safe_to_spend.delta)}
                 </span>
               </div>
 
@@ -239,7 +257,7 @@ export const WhatIfSimulatorModal = ({ isOpen, onClose }) => {
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#86868b]">
                   Survival Runway
                 </span>
-                <div className="flex items-baseline justify-between">
+                <div className="flex items-center justify-between gap-1.5">
                   <span className="text-xs text-[#86868b]">
                     {result.runway.before_months} mo
                   </span>
@@ -260,20 +278,26 @@ export const WhatIfSimulatorModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Balance / Monthly Obligation Delta */}
-              <div className="rounded-[16px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-1.5">
+              <div className="rounded-[16px] bg-[#1d1d1f] border border-white/[0.08] p-4 space-y-1.5 overflow-hidden">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#86868b]">
                   {paymentMode === 'emi' ? 'Monthly Fixed Bills' : 'Liquid Balance'}
                 </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-[#86868b]">
-                    ₹{(paymentMode === 'emi' ? parseFloat(result.upcoming_fixed_expenses.before) : parseFloat(result.total_balance.before)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                  <span 
+                    className="text-xs text-[#86868b] truncate max-w-[45%]"
+                    title={`₹${(paymentMode === 'emi' ? parseFloat(result.upcoming_fixed_expenses.before) : parseFloat(result.total_balance.before)).toLocaleString('en-IN')}`}
+                  >
+                    {formatCurrencyDisplay(paymentMode === 'emi' ? result.upcoming_fixed_expenses.before : result.total_balance.before)}
                   </span>
-                  <span className="text-xs text-[#86868b]">→</span>
-                  <span className="text-base font-semibold text-white">
-                    ₹{(paymentMode === 'emi' ? parseFloat(result.upcoming_fixed_expenses.after) : parseFloat(result.total_balance.after)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  <span className="text-xs text-[#86868b] shrink-0">→</span>
+                  <span 
+                    className="text-sm sm:text-base font-semibold text-white truncate max-w-[45%]"
+                    title={`₹${(paymentMode === 'emi' ? parseFloat(result.upcoming_fixed_expenses.after) : parseFloat(result.total_balance.after)).toLocaleString('en-IN')}`}
+                  >
+                    {formatCurrencyDisplay(paymentMode === 'emi' ? result.upcoming_fixed_expenses.after : result.total_balance.after)}
                   </span>
                 </div>
-                <span className="text-[10px] text-[#86868b] block">
+                <span className="text-[10px] text-[#86868b] block truncate">
                   {paymentMode === 'emi' ? `+₹${(amount/emiMonths).toFixed(0)}/mo added` : `-₹${amount.toLocaleString('en-IN')} upfront`}
                 </span>
               </div>
